@@ -263,6 +263,7 @@ const server = new McpServer(
       'Mobile-only features (e.g. Instagram profile links): browser_mobile_mode switches a site to the iPhone version (user agent, screen and touch).',
       'Sign-in: never ask for or type passwords. Use browser_keychain_fill; the user approves in a macOS dialog and the password is never shared with you. Typing into password or payment-card fields is blocked.',
       'When a page needs the user (sign-in without a saved Keychain entry, CAPTCHA, two-factor code, "unusual activity" block), call browser_request_user: wCLAUDE asks the user to act in its window and returns when they are done. Never try to get past those checks yourself.',
+      'YouTube: prefer the youtube_* tools (official API) over driving YouTube Studio pages; they upload videos of any size and read statistics reliably.',
       'Ask the user before publishing, posting, sending a message, buying, accepting terms or deleting anything.',
     ].join('\n'),
   },
@@ -672,6 +673,117 @@ tool('browser_console', 'Recent console messages and page errors of a tab (for d
   const out = logs.slice(-100).join('\n') || 'No console messages since the agent connected to this tab.';
   if (clear) logs.length = 0;
   return out;
+}, { readOnlyHint: true });
+
+// ---------------------------------------------------------------- YouTube (official API)
+// The OAuth key and tokens stay in the user's Keychain, inside wCLAUDE; the agent only gets API results.
+async function yt(method, route, body, action = 'youtube') {
+  await ensureApp();
+  await activity(action);
+  return api(method, route, body);
+}
+const NOT_READY = 'YouTube is not connected yet. Ask the user to open wCLAUDE › Settings › YouTube, choose their OAuth key file and click Connect YouTube (or call youtube_connect once the key is saved).';
+const ytError = (e) => { if (/not_connected|no_client/.test(String(e.message))) throw new Error(NOT_READY); throw e; };
+const qs = (o) => new URLSearchParams(Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== ''))).toString();
+
+tool('youtube_status', 'Whether the YouTube API is set up in wCLAUDE (OAuth key saved, channel connected).', {}, async () => {
+  const s = await yt('GET', '/youtube/status');
+  if (!s.clientConfigured) return 'No OAuth key yet. ' + NOT_READY;
+  if (!s.connected) return 'OAuth key saved, channel not connected: call youtube_connect (the user approves in their usual browser).';
+  return `Connected to the channel ${s.channel ? `"${s.channel.title}" (${s.channel.id})` : ''}.`;
+}, { readOnlyHint: true });
+
+tool('youtube_connect', 'Connect the user\'s YouTube channel: opens Google\'s consent page in the user\'s usual browser and waits (up to 5 minutes) for them to approve.', {}, async () => {
+  const s = await yt('POST', '/youtube/connect').catch(ytError);
+  return s.connected ? `Connected to "${s.channel && s.channel.title}".` : 'Not connected.';
+});
+
+tool('youtube_channel', 'The connected channel: name, subscribers, total views and video count.', {}, async () => {
+  return JSON.stringify(await yt('GET', '/youtube/channel').catch(ytError), null, 2);
+}, { readOnlyHint: true });
+
+tool('youtube_list_videos', 'The channel\'s videos, newest first, with privacy, scheduled date, views, likes and comments.', {
+  max_results: z.number().int().min(1).max(50).default(25),
+  page_token: z.string().optional(),
+}, async ({ max_results, page_token }) => {
+  return JSON.stringify(await yt('GET', `/youtube/videos?${qs({ max: max_results, pageToken: page_token })}`).catch(ytError), null, 2);
+}, { readOnlyHint: true });
+
+tool('youtube_get_video', 'One video in detail: title, description, tags, category, privacy, schedule, processing, statistics.', {
+  video_id: z.string(),
+}, async ({ video_id }) => {
+  return JSON.stringify(await yt('GET', `/youtube/video?${qs({ id: video_id })}`).catch(ytError), null, 2);
+}, { readOnlyHint: true });
+
+tool('youtube_update_video', 'Change a video\'s title, description, tags, category, privacy or scheduled publication. This changes public content: get the user\'s approval first.', {
+  video_id: z.string(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  category_id: z.string().optional().describe('e.g. "20" Gaming, "24" Entertainment.'),
+  privacy: z.enum(['private', 'unlisted', 'public']).optional(),
+  publish_at: z.string().optional().describe('ISO 8601 date to publish automatically (the video stays private until then); empty string clears it.'),
+}, async ({ video_id, title, description, tags, category_id, privacy, publish_at }) => {
+  const v = await yt('POST', '/youtube/video', { id: video_id, title, description, tags, categoryId: category_id, privacy, publishAt: publish_at }).catch(ytError);
+  return `Updated.\n${JSON.stringify(v, null, 2)}`;
+});
+
+tool('youtube_upload_video', 'Upload a local video file of any size to the channel (resumable, in the background). Private by default: get the user\'s approval before making anything public or scheduled. Returns a job id for youtube_upload_status.', {
+  path: z.string().describe('Absolute path of the video file (~/ allowed).'),
+  title: z.string().max(100),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  category_id: z.string().default('20'),
+  privacy: z.enum(['private', 'unlisted', 'public']).default('private'),
+  publish_at: z.string().optional().describe('ISO 8601 date for a scheduled publication.'),
+  made_for_kids: z.boolean().default(false),
+  notify_subscribers: z.boolean().default(false),
+}, async (a) => {
+  const file = expandPath(a.path);
+  if (!fs.existsSync(file)) throw new Error(`File not found: ${file}`);
+  const job = await yt('POST', '/youtube/upload', { path: file, title: a.title, description: a.description, tags: a.tags, categoryId: a.category_id, privacy: a.privacy, publishAt: a.publish_at, madeForKids: a.made_for_kids, notifySubscribers: a.notify_subscribers }, 'upload').catch(ytError);
+  if (job.error) throw new Error(job.error);
+  return `Upload started: job ${job.id}, ${fmtSize(job.size)}. Follow it with youtube_upload_status.`;
+});
+
+tool('youtube_upload_status', 'Progress of a video upload; can wait for it to finish.', {
+  job_id: z.number().int(),
+  wait_seconds: z.number().min(0).max(1800).default(0),
+}, async ({ job_id, wait_seconds }) => {
+  const end = Date.now() + wait_seconds * 1000;
+  let j = await yt('GET', `/youtube/upload?id=${job_id}`);
+  while ((j.state === 'uploading' || j.state === 'starting') && Date.now() < end) {
+    await sleep(2000);
+    j = await api('GET', `/youtube/upload?id=${job_id}`);
+  }
+  if (j.error && !j.state) throw new Error('No such upload job.');
+  const pct = j.size ? Math.floor((j.sent / j.size) * 100) : 0;
+  if (j.state === 'done') return `Uploaded: ${j.url} (video id ${j.videoId}). YouTube now processes it; check with youtube_get_video.`;
+  if (j.state === 'error') return `Upload failed: ${j.error}`;
+  return `Uploading ${j.name}: ${pct}% (${fmtSize(j.sent)} of ${fmtSize(j.size)}).`;
+}, { readOnlyHint: true });
+
+tool('youtube_set_thumbnail', 'Set a video\'s custom thumbnail from a local JPEG or PNG (2 MB max). Changes public content: get the user\'s approval first.', {
+  video_id: z.string(),
+  path: z.string(),
+}, async ({ video_id, path: p }) => {
+  await yt('POST', '/youtube/thumbnail', { id: video_id, path: expandPath(p) }).catch(ytError);
+  return 'Thumbnail set.';
+});
+
+tool('youtube_analytics', 'Channel or video statistics from YouTube Analytics for a date range (views, watch time, average view duration, likes, subscribers gained…).', {
+  start_date: z.string().describe('YYYY-MM-DD'),
+  end_date: z.string().describe('YYYY-MM-DD'),
+  metrics: z.string().optional().describe('Comma-separated, default views,estimatedMinutesWatched,averageViewDuration,likes,subscribersGained.'),
+  dimensions: z.string().optional().describe('e.g. "day", "video", "country".'),
+  video_id: z.string().optional(),
+  sort: z.string().optional().describe('e.g. "-views".'),
+  max_results: z.number().int().optional(),
+}, async (a) => {
+  const r = await yt('GET', `/youtube/analytics?${qs({ startDate: a.start_date, endDate: a.end_date, metrics: a.metrics, dimensions: a.dimensions, videoId: a.video_id, sort: a.sort, maxResults: a.max_results })}`).catch(ytError);
+  const head = (r.columnHeaders || []).map((c) => c.name);
+  const rows = (r.rows || []).map((row) => row.join('\t'));
+  return [head.join('\t'), ...rows].join('\n') || 'No data for this period.';
 }, { readOnlyHint: true });
 
 const transport = new StdioServerTransport();

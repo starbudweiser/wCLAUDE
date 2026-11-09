@@ -69,5 +69,45 @@ async function load() {
   fit();
 }
 
+// YouTube
+$('ytTitle').textContent = t('settings.youtube');
+$('ytHint').textContent = t('settings.youtubeHint');
+$('ytHow').textContent = t('settings.youtubeHow');
+$('ytChoose').textContent = t('settings.youtubeChoose');
+$('ytConnect').textContent = t('settings.youtubeConnect');
+$('ytDisconnect').textContent = t('settings.youtubeDisconnect');
+function ytMessage(key, cls = '') {
+  const m = $('ytMsg');
+  m.textContent = key ? t(key) : '';
+  m.className = cls;
+  m.hidden = !key;
+  fit();
+}
+function renderYouTube(s) {
+  $('ytClient').textContent = t(s.clientConfigured ? 'settings.youtubeClient' : 'settings.youtubeNoClient');
+  $('ytChannel').textContent = s.connected ? t('settings.youtubeChannel', { channel: (s.channel && s.channel.title) || '—' }) : t('settings.youtubeNotConnected');
+  $('ytChannel').className = s.connected ? 'ok' : 'muted';
+  $('ytConnect').hidden = !s.clientConfigured || s.connected;
+  $('ytDisconnect').hidden = !s.connected;
+  brand();
+  fit();
+}
+$('ytChoose').onclick = async () => {
+  const r = await invoke('yt:import');
+  if (r.cancelled) return;
+  if (r.error) return ytMessage('settings.youtubeBadFile', 'err');
+  ytMessage('');
+  renderYouTube(r);
+};
+$('ytConnect').onclick = async () => {
+  ytMessage('settings.youtubeWaiting');
+  const r = await invoke('yt:connect');
+  if (r.error) return ytMessage('settings.youtubeError', 'err');
+  ytMessage('');
+  renderYouTube(r);
+};
+$('ytDisconnect').onclick = async () => renderYouTube(await invoke('yt:disconnect'));
+invoke('yt:status').then(renderYouTube);
+
 on('update:state', renderUpdate);
 load();

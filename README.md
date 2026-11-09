@@ -21,6 +21,8 @@ General-purpose browser tools for agents hit the same walls: uploads capped at a
 | Stay signed in | A persistent profile: you sign in once per site, in the wCLAUDE window. |
 | Sign in without exposing passwords | **Keychain fill**: wCLAUDE fills the form from your macOS Keychain after you approve in a macOS dialog. The agent never receives the password. |
 | See what the agent does | The toolbar shows which agent is acting and what it is doing; the tab it works on comes to the front. |
+| Get past sign-ins, CAPTCHAs and blocks | **Hand-over**: the agent stops and asks you to act in the window; it resumes when you click DONE. wCLAUDE never tries to get past these checks itself. |
+| Work with YouTube reliably | **Official YouTube API**: uploads of any size (resumable), titles, descriptions, thumbnails, scheduling and analytics — no web page to drive. |
 
 ## Requirements
 
@@ -81,15 +83,39 @@ The server starts wCLAUDE in the background when needed (it never takes the focu
 | `browser_keychain_fill` | Fill the page's sign-in form from the macOS Keychain, after the user's approval. |
 | `browser_evaluate` | Run JavaScript in the page. |
 | `browser_handle_dialog` / `browser_console` | Answer JavaScript dialogs; read console messages. |
+| `browser_request_user` | Hand over to the user (sign-in, CAPTCHA, two-factor code, blocked access) and wait until they click DONE. |
+| `youtube_status` / `youtube_connect` | YouTube API set-up state; connect the channel (consent in the user's usual browser). |
+| `youtube_channel` / `youtube_list_videos` / `youtube_get_video` | Channel figures, videos with privacy, schedule and statistics, video details. |
+| `youtube_upload_video` / `youtube_upload_status` | Upload a local video of any size in the background (private by default) and follow it. |
+| `youtube_update_video` / `youtube_set_thumbnail` | Change title, description, tags, category, privacy, scheduled date; set a thumbnail. |
+| `youtube_analytics` | Views, watch time, average view duration, likes, subscribers gained… per day, video or country. |
 
 ## Guardrails that do not change
 
 "No limits" means no *technical* limit of the tool, not the absence of these rules:
 
 - **Passwords and bank details are never typed by the agent.** `browser_type` and `browser_press_key` refuse password and payment-card fields; sign-in goes through `browser_keychain_fill`, which needs your approval in a macOS dialog each time and never returns the password to the agent. While a password field is filled, `browser_evaluate` is disabled so a script cannot read it back.
-- **CAPTCHAs are never bypassed.** The agent asks you to solve them in the wCLAUDE window.
+- **CAPTCHAs and anti-bot checks are never bypassed or hidden from.** The agent hands over with `browser_request_user` and you deal with them in the wCLAUDE window.
 - **Your consent comes first** before anything is published or posted, a message is sent, something is bought, terms are accepted or anything is deleted. The MCP server states this rule to every agent; the agent asks, you answer.
 - **Control stays on this Mac.** The control port and the debugging port only listen on 127.0.0.1, the control API requires a token stored in a file only you can read (`control.json`, mode 600), and **Settings › Allow control by an AI agent** turns control off entirely. While control is on, any program running under your account could connect to the debugging port, as with any browser started with remote debugging.
+
+## Hand-over to the user
+
+Some steps belong to you: signing in without a saved Keychain entry, CAPTCHAs, two-factor codes, "unusual activity" blocks. When the agent meets one (wCLAUDE flags these pages in its answers), it calls `browser_request_user`: a bar appears under the toolbar with what to do, macOS shows a notification (wCLAUDE does not take the focus), and the agent waits. Click **DONE** when you are finished, or **Cancel**.
+
+Some sites refuse to let you sign in from any browser an agent can control (Google shows "This browser or app may not be secure"). wCLAUDE does not try to hide from those checks: use the site's official API when there is one (YouTube below), or do that task in your usual browser.
+
+## YouTube API
+
+The `youtube_*` tools use the official YouTube Data API v3 and YouTube Analytics API. One-time set-up, with your Google account:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project (or pick one).
+2. **APIs & Services › Library**: enable **YouTube Data API v3** and **YouTube Analytics API**.
+3. **Google Auth Platform › Branding / Audience**: create the consent screen (External, Testing) and add your Google account as a **test user**.
+4. **Clients › Create client › Desktop app**, then download the JSON file.
+5. In wCLAUDE: **Settings › YouTube › Choose the OAuth key file…**, then **Connect YouTube** and approve in your usual browser.
+
+The key and tokens are stored in your Keychain and never shared with the agent. Uploads are private unless you approve otherwise. The default quota (10,000 units a day) allows about six uploads a day.
 
 ## Keychain sign-in
 

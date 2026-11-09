@@ -1,6 +1,6 @@
 // wCLAUDE — navigateur pilotable par un agent IA (MCP), interface Socle.
 const {
-  app, BrowserWindow, WebContentsView, Menu, ipcMain, session, shell, screen, clipboard, nativeTheme, Notification,
+  app, BrowserWindow, WebContentsView, Menu, ipcMain, session, shell, screen, clipboard, nativeTheme, Notification, dialog,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -9,6 +9,7 @@ const i18n = require('./lib/i18n');
 const keychain = require('./lib/keychain');
 const updater = require('./lib/updater');
 const control = require('./lib/control');
+const youtube = require('./lib/youtube');
 const pkg = require('../package.json');
 
 const UI = path.join(__dirname, 'ui');
@@ -62,7 +63,7 @@ const t = (k, v) => i18n.t(k, v);
 const tabById = (id) => tabs.find((x) => x.id === Number(id));
 const tabByWc = (wc) => tabs.find((x) => x.wc === wc || x.wc.id === (wc && wc.id));
 const activeTab = () => tabById(activeId);
-const isBusy = () => Date.now() - agent.at < 120000 || downloads.some((d) => d.state === 'progressing') || (handoff && handoff.status === 'waiting');
+const isBusy = () => Date.now() - agent.at < 120000 || downloads.some((d) => d.state === 'progressing') || (handoff && handoff.status === 'waiting') || youtube.uploading();
 
 // ---------- barre d'outils ----------
 function publicTab(tab) {
@@ -701,6 +702,36 @@ ipcMain.handle('update:install', async () => {
     return { error: String(e.message || e).startsWith('verify') ? 'verify' : 'network' };
   }
 });
+// ---------- YouTube (API officielle) ----------
+const ytPage = (ok) => `<!doctype html><html lang="${i18n.lang}"><head><meta charset="utf-8"><title>wCLAUDE</title>
+<style>html,body{margin:0;height:100%;background:#1e1e1e;color:#ddd;font:15px/22px -apple-system,BlinkMacSystemFont,sans-serif}
+body{display:grid;place-items:center}div{max-width:520px;padding:24px;text-align:center}b{color:#fff;font-size:20px;display:block;margin-bottom:12px}
+span{color:#d97757}</style></head><body><div><b><span>w</span>CLAUDE</b>${ok ? t('yt.pageOk') : t('yt.pageFail')}</div></body></html>`;
+
+async function youtubeConnect() {
+  return youtube.connect({ openExternal: (url) => shell.openExternal(url), page: ytPage });
+}
+
+function watchUpload(job) {
+  const timer = setInterval(() => {
+    const j = youtube.uploadStatus(job.id);
+    if (!j || j.state === 'uploading' || j.state === 'starting') return;
+    clearInterval(timer);
+    if (j.state === 'done') showNotice(t('yt.uploaded', { name: j.name }), 'tip');
+    else showNotice(t('yt.uploadFailed', { name: j.name }), 'danger');
+  }, 2000);
+}
+
+ipcMain.handle('yt:status', () => youtube.status().catch(() => ({ clientConfigured: false, connected: false })));
+ipcMain.handle('yt:import', async (e) => {
+  const parent = BrowserWindow.fromWebContents(e.sender);
+  const r = await dialog.showOpenDialog(parent, { properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }] });
+  if (r.canceled || !r.filePaths[0]) return { cancelled: true };
+  try { return await youtube.importClient(r.filePaths[0]); } catch { return { error: 'client_file' }; }
+});
+ipcMain.handle('yt:connect', async () => { try { return await youtubeConnect(); } catch (err) { return { error: String(err.message || err) }; } });
+ipcMain.handle('yt:disconnect', () => youtube.disconnect());
+
 ipcMain.handle('kc:add', async (_e, { site, account, password }) => {
   const res = await keychain.addEntry(site, account, password);
   if (res.saved) showNotice(t('kcadd.saved', { site: res.site }), 'tip');
@@ -768,6 +799,16 @@ const routes = {
   },
   'GET /handoff': (_b, q) => ({ status: handoff && handoff.id === Number(q.id) ? handoff.status : 'cancelled' }),
   'POST /handoff/cancel': (b) => ({ ok: answerHandoff(b.id, 'cancelled') }),
+  'GET /youtube/status': () => youtube.status(),
+  'POST /youtube/connect': () => youtubeConnect(),
+  'GET /youtube/channel': () => youtube.channel(),
+  'GET /youtube/videos': (_b, q) => youtube.listVideos({ max: Number(q.max) || 25, pageToken: q.pageToken }),
+  'GET /youtube/video': (_b, q) => youtube.getVideo(q.id),
+  'POST /youtube/video': (b) => youtube.updateVideo(b.id, b),
+  'POST /youtube/thumbnail': (b) => youtube.setThumbnail(b.id, b.path),
+  'POST /youtube/upload': (b) => { const job = youtube.startUpload(b); watchUpload(job); return youtube.uploadStatus(job.id); },
+  'GET /youtube/upload': (_b, q) => youtube.uploadStatus(q.id) || { error: 'no_job' },
+  'GET /youtube/analytics': (_b, q) => youtube.analytics(q),
   'POST /activity': (b) => {
     const key = 'act.' + String(b.action || '');
     agent.label = i18n.strings[key] ? t(key) : String(b.action || '').slice(0, 40);

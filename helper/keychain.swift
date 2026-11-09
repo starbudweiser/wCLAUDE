@@ -131,6 +131,53 @@ case "add":
     guard status == errSecSuccess else { fail("keychain", status) }
     emit(["saved": true])
 
+// Secrets propres à wCLAUDE (jetons OAuth de l'API YouTube…) : mots de passe génériques, lus sans demande d'accord
+// puisque seul cet outil, signé, figure dans leur liste d'accès.
+case "secret-get":
+    guard let service = options["service"], let account = options["account"] else { fail("usage") }
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+        kSecMatchLimit as String: kSecMatchLimitOne,
+        kSecReturnData as String: true,
+    ]
+    var result: CFTypeRef?
+    let status = SecItemCopyMatching(query as CFDictionary, &result)
+    if status == errSecItemNotFound { emit(["found": false]) }
+    guard status == errSecSuccess, let data = result as? Data, let value = String(data: data, encoding: .utf8) else { fail("keychain", status) }
+    emit(["found": true, "value": value])
+
+case "secret-set":
+    guard let service = options["service"], let account = options["account"] else { fail("usage") }
+    let value = String(data: FileHandle.standardInput.readDataToEndOfFile(), encoding: .utf8)?
+        .trimmingCharacters(in: .newlines) ?? ""
+    guard !value.isEmpty else { fail("usage") }
+    let base: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+    ]
+    var add = base
+    add[kSecValueData as String] = Data(value.utf8)
+    add[kSecAttrLabel as String] = service
+    var status = SecItemAdd(add as CFDictionary, nil)
+    if status == errSecDuplicateItem {
+        status = SecItemUpdate(base as CFDictionary, [kSecValueData as String: Data(value.utf8)] as CFDictionary)
+    }
+    guard status == errSecSuccess else { fail("keychain", status) }
+    emit(["saved": true])
+
+case "secret-delete":
+    guard let service = options["service"], let account = options["account"] else { fail("usage") }
+    let status = SecItemDelete([
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+    ] as CFDictionary)
+    guard status == errSecSuccess || status == errSecItemNotFound else { fail("keychain", status) }
+    emit(["deleted": true])
+
 default:
     fail("usage")
 }

@@ -115,4 +115,18 @@ async function fill(wc, wantedAccount) {
   }
 }
 
-module.exports = { fill, listAccounts, addEntry, HELPER };
+// Secrets propres à wCLAUDE (jetons OAuth…), jamais transmis à l'agent.
+async function secretGet(service, account) {
+  const r = await runHelper(['secret-get', '--service', service, '--account', account]);
+  if (r.error) throw new Error('keychain');
+  return r.found ? r.value : null;
+}
+async function secretSet(service, account, value) {
+  const r = await runHelper(['secret-set', '--service', service, '--account', account], value);
+  if (!r.saved) throw new Error('keychain');
+}
+async function secretDelete(service, account) {
+  await runHelper(['secret-delete', '--service', service, '--account', account]);
+}
+
+module.exports = { fill, listAccounts, addEntry, secretGet, secretSet, secretDelete, HELPER };
