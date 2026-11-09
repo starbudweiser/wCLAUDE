@@ -1,0 +1,24 @@
+/* wCLAUDE — base commune des pages de l'interface, branchée sur les tokens Socle (textes à 110 %). */
+@import url("../socle/tokens.css");
+@import url("../socle/bundle.css");
+
+:root { color-scheme: dark; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 13px/18px var(--font-sans); -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+button { font: inherit; }
+.ic { display: block; flex: none; width: 16px; height: 16px; }
+
+/* Socle × 1,1 */
+.sc-btn { font: 500 13px/18px var(--font-sans); }
+.sc-btn--primary { font-weight: 700; }
+.sc-field__input { font: 13px/18px var(--font-sans); }
+.sc-panel__title { font: 700 15px/22px var(--font-sans); }
+.sc-badge { font: 500 11px/15px var(--font-sans); }
+
+.sc-btn--secondary { background: var(--control); }
+.sc-btn.is-on { background: var(--accent-fill); color: var(--on-accent-fill); }
+.sc-btn.is-on:hover { background: var(--accent-fill-hover); }
+
+:where(button, input, a, [tabindex]):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

@@ -1,0 +1,32 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="panel.css">
+<style>
+  .notes { max-height: 320px; overflow: auto; display: flex; flex-direction: column; gap: var(--space-3); background: var(--bg-sunken); padding: var(--space-3); }
+  .notes h3 { margin: 0; font: 700 13px/18px var(--font-sans); color: var(--text-strong); }
+  .notes ul { margin: 4px 0 0; padding-left: 18px; }
+  .notes p { margin: 4px 0 0; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<div class="stack">
+  <h1 id="title"></h1>
+  <p id="status"></p>
+  <div class="notes" id="notes" hidden></div>
+  <p class="center" id="error" hidden></p>
+  <div class="row center" id="actions" hidden>
+    <button class="sc-btn sc-btn--secondary" type="button" id="later"></button>
+    <button class="sc-btn sc-btn--primary" type="button" id="install"></button>
+  </div>
+  <div class="row center" id="closeRow" hidden>
+    <button class="sc-btn sc-btn--secondary" type="button" id="close"></button>
+  </div>
+</div>
+<script type="module" src="update.js"></script>
+</body>
+</html>

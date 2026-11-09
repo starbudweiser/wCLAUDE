@@ -1,0 +1,10 @@
+#!/bin/bash
+# Lance le serveur MCP de wCLAUDE (stdio) avec le moteur intégré à l'appli : aucune installation de Node n'est nécessaire.
+# Configuration MCP de l'agent : { "command": "<ce fichier>", "args": [] }
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$HERE/../.." && pwd)"                     # …/Contents/Resources/app (appli) ou racine du projet (sources)
+EXE="$(cd "$ROOT/../.." 2>/dev/null && pwd)/MacOS/wCLAUDE"
+if [ -x "$EXE" ]; then
+  ELECTRON_RUN_AS_NODE=1 exec "$EXE" "$ROOT/mcp/server.mjs" "$@"
+fi
+exec node "$ROOT/mcp/server.mjs" "$@"

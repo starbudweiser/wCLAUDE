@@ -1,0 +1,30 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: http: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>wCLAUDE</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="toolbar.css">
+</head>
+<body>
+<header id="tabsbar">
+  <div id="tabs" role="tablist"></div>
+  <button id="newtab" class="ib" type="button"></button>
+  <div id="spacer"></div>
+  <div id="notice" hidden></div>
+  <div id="agent" hidden></div>
+</header>
+<nav id="navbar">
+  <button id="back" class="ib" type="button"></button>
+  <button id="forward" class="ib" type="button"></button>
+  <button id="reload" class="ib" type="button"></button>
+  <input id="address" type="text" spellcheck="false" autocomplete="off">
+  <button id="mobile" class="sc-btn sc-btn--secondary" type="button"></button>
+  <button id="keychain" class="sc-btn sc-btn--secondary" type="button"></button>
+  <button id="downloads" class="sc-btn sc-btn--secondary" type="button"></button>
+</nav>
+<aside id="gutter" hidden><span class="label"></span><span class="site"></span></aside>
+<script type="module" src="toolbar.js"></script>
+</body>
+</html>

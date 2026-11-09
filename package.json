@@ -1,0 +1,31 @@
+{
+  "name": "wclaude",
+  "productName": "wCLAUDE",
+  "version": "1.0.0",
+  "description": "A browser any MCP-compatible AI agent can fully drive: tabs, uploads of any size, tidy downloads, per-site iPhone mode, Keychain sign-in.",
+  "main": "app/main.js",
+  "type": "commonjs",
+  "author": "Starbudweiser & Claude Code (Anthropic)",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.mjs",
+    "build": "scripts/build.sh",
+    "mcp": "node mcp/server.mjs"
+  },
+  "wclaude": {
+    "bundleId": "fr.stephan.wclaude",
+    "updateRepo": "starbudweiser/wCLAUDE",
+    "teamId": "35KLMK53PN"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "playwright-core": "^1.65.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^45.2.3"
+  }
+}

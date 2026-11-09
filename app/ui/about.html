@@ -1,0 +1,35 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<link rel="stylesheet" href="base.css">
+<style>
+  /* Modèle Socle (mDESK) : colonne de 300px, 28px de marge, 12px entre les blocs. */
+  html, body { background: var(--bg); }
+  body { margin: 0; padding: 28px; width: 356px; text-align: center; font-size: 13px; line-height: 18px; }
+  .col { width: 300px; display: flex; flex-direction: column; align-items: center; }
+  img { width: 84px; height: 84px; display: block; }
+  .name { margin-top: 12px; font: 700 17px/22px var(--font-sans); color: var(--text-strong); }
+  .version { margin-top: 6px; color: var(--text-muted); }
+  .desc { margin-top: 18px; }
+  .authors { margin-top: 12px; font-weight: 700; color: var(--text-strong); }
+  .license { margin-top: 12px; }
+  .muted { margin-top: 12px; color: var(--text-muted); }
+  p { margin: 0; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="col">
+  <img src="icon.png" alt="">
+  <p class="name">wCLAUDE</p>
+  <p class="version" id="version"></p>
+  <p class="desc" id="desc"></p>
+  <p class="authors">Starbudweiser &amp; Claude Code (Anthropic)</p>
+  <p class="license" id="license"></p>
+  <p class="muted" id="disclaimer"></p>
+  <p class="muted" id="origin"></p>
+</div>
+<script type="module" src="about.js"></script>
+</body>
+</html>

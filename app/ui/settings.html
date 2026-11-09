@@ -1,0 +1,48 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="panel.css">
+<style>
+  /* Grille adaptative Socle : colonnes de 550px au moins, chaque bloc garde sa hauteur (maçonnerie). */
+  .stack { display: block; columns: 2 520px; column-gap: var(--space-4); }
+  .card { break-inside: avoid; margin-bottom: var(--space-4); }
+  .stack > .card:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="stack">
+  <section class="card">
+    <h2 id="agentTitle"></h2>
+    <p class="sub" id="agentHint"></p>
+    <div class="sc-option" id="agentAllow"><span class="sc-choice sc-choice--check"></span><span class="sc-option__label"></span></div>
+    <p class="subtle" id="agentAllowHint"></p>
+    <p class="mono" id="agentState"></p>
+    <p class="muted" id="agentLast"></p>
+    <div class="row"><button class="sc-btn sc-btn--secondary" type="button" id="copyConfig"></button><span class="ok" id="copied" hidden></span></div>
+  </section>
+  <section class="card">
+    <h2 id="mobileTitle"></h2>
+    <p class="sub" id="mobileHint"></p>
+    <div class="list" id="mobileList"></div>
+  </section>
+  <section class="card">
+    <h2 id="dlTitle"></h2>
+    <p class="sub" id="dlHint"></p>
+    <p class="mono" id="dlPath"></p>
+    <div class="row"><button class="sc-btn sc-btn--secondary" type="button" id="dlOpen"></button></div>
+  </section>
+  <section class="card">
+    <h2 id="updTitle"></h2>
+    <p class="sub" id="updHint"></p>
+    <div class="sc-option" id="updAuto"><span class="sc-choice sc-choice--check"></span><span class="sc-option__label"></span></div>
+    <p id="updStatus"></p>
+    <p class="subtle" id="updLast"></p>
+    <div class="row"><button class="sc-btn sc-btn--secondary" type="button" id="updCheck"></button></div>
+  </section>
+</div>
+<script type="module" src="settings.js"></script>
+</body>
+</html>

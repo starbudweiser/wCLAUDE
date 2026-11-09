@@ -1,0 +1,24 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<form class="stack" id="form" autocomplete="off">
+  <h1 id="title"></h1>
+  <p class="muted" id="intro"></p>
+  <label class="sc-field"><span class="sc-field__label" id="lSite"></span><input class="sc-field__input" id="site" type="text" spellcheck="false"></label>
+  <label class="sc-field"><span class="sc-field__label" id="lAccount"></span><input class="sc-field__input" id="account" type="text" spellcheck="false"></label>
+  <label class="sc-field"><span class="sc-field__label" id="lPassword"></span><input class="sc-field__input" id="password" type="password"></label>
+  <p class="err" id="error" hidden></p>
+  <div class="row end">
+    <button class="sc-btn sc-btn--secondary" type="button" id="cancel"></button>
+    <button class="sc-btn sc-btn--primary" type="submit" id="save"></button>
+  </div>
+</form>
+<script type="module" src="kcadd.js"></script>
+</body>
+</html>

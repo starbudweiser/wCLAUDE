@@ -1,0 +1,27 @@
+import { t, $, invoke, send, brand, fit } from './panel.js';
+$('title').textContent = t('kcadd.title');
+$('intro').textContent = t('kcadd.intro');
+$('lSite').textContent = t('kcadd.site');
+$('site').placeholder = t('kcadd.sitePlaceholder');
+$('lAccount').textContent = t('kcadd.account');
+$('lPassword').textContent = t('kcadd.password');
+$('cancel').textContent = t('kcadd.cancel');
+$('save').textContent = t('kcadd.save');
+$('site').value = new URLSearchParams(location.search).get('site') || '';
+$('cancel').onclick = () => send('panel:close');
+($('site').value ? $('account') : $('site')).focus();
+const showError = (key) => { $('error').textContent = t(key); $('error').hidden = false; fit(); };
+for (const id of ['site', 'account', 'password']) $(id).addEventListener('input', () => { $('error').hidden = true; fit(); });
+$('form').onsubmit = async (e) => {
+  e.preventDefault();
+  const site = $('site').value.trim(), account = $('account').value.trim(), password = $('password').value;
+  if (!site || !account || !password) return showError('kcadd.missing');
+  $('save').disabled = true;
+  const r = await invoke('kc:add', { site, account, password });
+  $('password').value = '';
+  $('save').disabled = false;
+  if (r && r.saved) send('panel:close');
+  else showError(r && r.error === 'missing' ? 'kcadd.missing' : 'kcadd.error');
+};
+brand();
+fit();

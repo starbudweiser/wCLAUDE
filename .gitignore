@@ -1,0 +1,6 @@
+node_modules/
+dist/
+app/bin/wCLAUDE
+.DS_Store
+PASSATION_*.md
+*.log

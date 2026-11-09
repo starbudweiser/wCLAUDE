@@ -1,0 +1,85 @@
+html, body { height: 100%; overflow: hidden; user-select: none; }
+
+/* Rangée des onglets : 40px, déplace la fenêtre, laisse la place aux boutons de fenêtre. */
+#tabsbar {
+  height: 40px; display: flex; align-items: stretch; gap: var(--space-1);
+  padding: 0 var(--space-3) 0 84px;
+  background: var(--surface-raised); border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+}
+#tabs { display: flex; align-items: stretch; min-width: 0; flex: 0 1 auto; overflow: hidden; }
+#notice, #agent { flex: none; }
+.tab {
+  -webkit-app-region: no-drag;
+  display: flex; align-items: center; gap: var(--space-1\.5);
+  flex: 0 1 220px; min-width: 96px; max-width: 220px;
+  padding: 0 var(--space-1) 0 var(--space-3);
+  border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none;
+  color: var(--text-subtle); font: 500 13px/18px var(--font-sans); cursor: default; text-align: left;
+  transition: color .15s, background-color .15s;
+}
+.tab:hover { color: var(--text); background: var(--surface-hover); }
+.tab.is-active { color: var(--text-strong); font-weight: 700; border-bottom-color: var(--accent); }
+.tab .fav { width: 16px; height: 16px; flex: none; display: grid; place-items: center; }
+.tab .fav img { width: 16px; height: 16px; display: block; }
+.tab .title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab .close {
+  width: 22px; height: 22px; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: var(--radius); background: none; color: var(--text-muted); opacity: 0; padding: 0;
+  transition: background-color .15s;
+}
+.tab .close .ic { width: 14px; height: 14px; }
+.tab:hover .close, .tab.is-active .close { opacity: 1; }
+.tab .close:hover { background: var(--control-hover); color: var(--text-strong); }
+.tab.is-agent .fav { color: var(--bubble-ai); }
+
+#newtab { -webkit-app-region: no-drag; align-self: center; width: 28px; height: 28px; }
+#spacer { flex: 1; }
+
+/* Bulles (règle Socle : fond plein de la couleur du type, texte foncé, icône dans un carré). */
+.bubble {
+  -webkit-app-region: no-drag;
+  align-self: center; display: flex; align-items: center; gap: var(--space-2);
+  max-width: 640px; min-width: 0; padding: 5px 10px 5px 5px; border-radius: 6px;
+  background: var(--bubble-help); color: var(--on-bubble); font: 13px/18px var(--font-sans);
+}
+.bubble--tip { background: var(--bubble-tip); }
+.bubble--warning { background: var(--bubble-warning); }
+.bubble--danger { background: var(--bubble-danger); }
+.bubble--ai { background: var(--bubble-ai); }
+.bubble .bi { flex: none; display: inline-flex; padding: 4px; border-radius: 4px; background: var(--bubble-icon); color: #fff; }
+.bubble .bi .ic { width: 14px; height: 14px; }
+.bubble .text { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bubble .act { flex: none; border: 0; background: none; padding: 0; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+#agent .text b { font-weight: 700; }
+
+/* Barre de navigation : 52px. */
+#navbar {
+  height: 52px; display: flex; align-items: center; gap: var(--space-2);
+  padding: 0 var(--space-3); background: var(--surface-raised); border-bottom: 1px solid var(--border);
+}
+.ib {
+  width: 32px; height: 32px; flex: none; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: var(--radius); background: var(--control); color: var(--text-strong);
+  transition: background-color .15s;
+}
+.ib:hover { background: var(--control-hover); }
+.ib:active { background: var(--control-pressed); }
+.ib:disabled { opacity: var(--opacity-disabled); }
+#address {
+  flex: 1; min-width: 120px; height: 36px; padding: 0 var(--space-3);
+  border: 0; border-radius: var(--radius-field); background: var(--bg-sunken); color: var(--text-strong);
+  font: 13px/18px var(--font-sans); user-select: text;
+}
+#address::placeholder { color: var(--text-subtle); }
+#navbar .sc-btn { flex: none; }
+#downloads .count { font: 500 11px/15px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--accent-text); }
+#downloads.is-active .count { color: var(--success); }
+
+/* Marges autour de l'affichage iPhone (visibles de part et d'autre de la page). */
+#gutter {
+  position: fixed; top: 92px; left: 0; padding: var(--space-6);
+  display: flex; flex-direction: column; gap: var(--space-1);
+}
+#gutter .label { font: 700 15px/22px var(--font-sans); letter-spacing: .025em; color: var(--text-strong); }
+#gutter .site { color: var(--accent-text); font: 13px/18px var(--font-mono); }
