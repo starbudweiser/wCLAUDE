@@ -33,6 +33,6 @@ const [appPath] = await packager({
     LSMinimumSystemVersion: '13.0',
     NSAppleEventsUsageDescription: 'wCLAUDE',
   },
-  ignore: [/^\/dist($|\/)/, /^\/test($|\/)/, /^\/scripts($|\/)/, /^\/helper($|\/)/, /^\/assets($|\/)/, /^\/\.git/, /^\/\.claude/, /^\/[^/]+\.md$/, /^\/release\.sh$/],
+  ignore: [/^\/dist($|\/)/, /^\/test($|\/)/, /^\/scripts($|\/)/, /^\/helper($|\/)/, /^\/assets($|\/)/, /^\/\.git/, /^\/\.claude/, /^\/[^/]+\.md$/, /^\/release\.sh$/, /^\/changelogs($|\/)/],
 });
 console.log(path.join(appPath, 'wCLAUDE.app'));

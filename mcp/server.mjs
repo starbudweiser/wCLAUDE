@@ -539,6 +539,11 @@ tool('browser_evaluate', 'Run JavaScript in the page and return the result as JS
   script: z.string(),
 }, async ({ tab, script }) => {
   const { page } = await resolve(tab, 'evaluate');
+  // A filled password field must never be read back by the agent: no scripts until the form is gone.
+  for (const frame of page.frames()) {
+    const filled = await frame.evaluate(() => [...document.querySelectorAll('input[type=password]')].some((i) => i.value)).catch(() => false);
+    if (filled) throw new Error('A password field is filled on this page, so scripts are disabled until the form is submitted or left.');
+  }
   const body = /\breturn\b/.test(script) ? script : `return (${script});`;
   const result = await page.evaluate(`(async () => { ${body} })()`);
   const json = JSON.stringify(result, null, 2) ?? 'undefined';
