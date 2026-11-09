@@ -90,6 +90,16 @@ async function ensure() {
   // hand them back to wCLAUDE, which saves them under their real name in its downloads folder.
   const cdp = await browser.newBrowserCDPSession();
   await cdp.send('Browser.setDownloadBehavior', { behavior: 'default' }).catch(() => {});
+  // Playwright emulates a light color scheme on every page it attaches to, while wCLAUDE is always dark:
+  // sites that follow prefers-color-scheme (Reddit…) then keep flipping between light and dark. Keep them dark.
+  for (const ctx of browser.contexts()) {
+    for (const p of ctx.pages()) keepDark(p);
+    ctx.on('page', keepDark);
+  }
+}
+
+function keepDark(page) {
+  page.emulateMedia({ colorScheme: 'dark' }).catch(() => {});
 }
 
 async function targetIdOf(page) {
