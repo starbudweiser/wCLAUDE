@@ -683,14 +683,21 @@ async function yt(method, route, body, action = 'youtube') {
   return api(method, route, body);
 }
 const NOT_READY = 'YouTube is not connected yet. Ask the user to open wCLAUDE › Settings › YouTube, choose their OAuth key file and click Connect YouTube (or call youtube_connect once the key is saved).';
-const ytError = (e) => { if (/not_connected|no_client/.test(String(e.message))) throw new Error(NOT_READY); throw e; };
+const RECONNECT = 'The YouTube connection lacks a permission this action needs (it was made before subtitles were supported). Ask the user to reconnect once: wCLAUDE › Settings › YouTube › Reconnect YouTube, or call youtube_connect (the user approves in their usual browser).';
+const ytError = (e) => {
+  const m = String(e.message);
+  if (/not_connected|no_client/.test(m)) throw new Error(NOT_READY);
+  if (/reconnect_needed/.test(m)) throw new Error(RECONNECT);
+  throw e;
+};
 const qs = (o) => new URLSearchParams(Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== ''))).toString();
 
 tool('youtube_status', 'Whether the YouTube API is set up in wCLAUDE (OAuth key saved, channel connected).', {}, async () => {
   const s = await yt('GET', '/youtube/status');
   if (!s.clientConfigured) return 'No OAuth key yet. ' + NOT_READY;
   if (!s.connected) return 'OAuth key saved, channel not connected: call youtube_connect (the user approves in their usual browser).';
-  return `Connected to the channel ${s.channel ? `"${s.channel.title}" (${s.channel.id})` : ''}.`;
+  const line = `Connected to the channel ${s.channel ? `"${s.channel.title}" (${s.channel.id})` : ''}.`;
+  return s.needsReconnect ? `${line} ${RECONNECT}` : line;
 }, { readOnlyHint: true });
 
 tool('youtube_connect', 'Connect the user\'s YouTube channel: opens Google\'s consent page in the user\'s usual browser and waits (up to 5 minutes) for them to approve.', {}, async () => {
@@ -769,6 +776,25 @@ tool('youtube_set_thumbnail', 'Set a video\'s custom thumbnail from a local JPEG
 }, async ({ video_id, path: p }) => {
   await yt('POST', '/youtube/thumbnail', { id: video_id, path: expandPath(p) }).catch(ytError);
   return 'Thumbnail set.';
+});
+
+tool('youtube_list_captions', 'The subtitle tracks of a video: id, language, name, kind (standard, or asr for automatic captions), draft, status.', {
+  video_id: z.string(),
+}, async ({ video_id }) => {
+  const list = await yt('GET', `/youtube/captions?${qs({ videoId: video_id })}`).catch(ytError);
+  return list.length ? JSON.stringify(list, null, 2) : 'No subtitle tracks.';
+}, { readOnlyHint: true });
+
+tool('youtube_upload_caption', 'Add a subtitle track to a video from a local file (SRT, VTT, SBV, SCC, TTML; UTF-8). Visible to viewers unless draft: get the user\'s approval first. YouTube refuses two tracks with the same language and name: set replace to update the existing one. Costs 400 quota units (450 when replacing).', {
+  video_id: z.string(),
+  path: z.string().describe('Local subtitle file.'),
+  language: z.string().describe('BCP-47 language code of the subtitles, e.g. "en", "fr", "pt-BR".'),
+  name: z.string().optional().describe('Track name shown to viewers; empty (default) for the main track of that language.'),
+  draft: z.boolean().optional().describe('Upload as a draft, hidden from viewers. Default false.'),
+  replace: z.boolean().optional().describe('Replace a track with the same language and name instead of failing. Default false.'),
+}, async (a) => {
+  const c = await yt('POST', '/youtube/caption', { videoId: a.video_id, path: expandPath(a.path), language: a.language, name: a.name, draft: a.draft, replace: a.replace }).catch(ytError);
+  return `${c.replaced ? 'Replaced' : 'Added'} subtitle track ${c.id} (${c.language}${c.name ? `, "${c.name}"` : ''}${c.draft ? ', draft' : ''}). YouTube processes it in a few minutes; check with youtube_list_captions.`;
 });
 
 tool('youtube_analytics', 'Channel or video statistics from YouTube Analytics for a date range (views, watch time, average view duration, likes, subscribers gained…).', {

@@ -12,6 +12,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/youtube',
   'https://www.googleapis.com/auth/youtube.upload',
   'https://www.googleapis.com/auth/yt-analytics.readonly',
+  'https://www.googleapis.com/auth/youtube.force-ssl', // sous-titres (captions.*)
 ];
 // Adresses remplaçables pour les essais (serveur YouTube simulé) ; jamais réglées dans l'appli livrée.
 const URLS = {
@@ -52,8 +53,16 @@ async function saveClient(clientId, clientSecret) {
 
 async function status() {
   const client = await readJSON('client').catch(() => null);
-  const token = await readJSON('token').catch(() => null);
-  return { clientConfigured: !!client, connected: !!(token && token.refresh_token), channel: token ? token.channel || null : null };
+  let token = await readJSON('token').catch(() => null);
+  const connected = !!(token && token.refresh_token);
+  // Jeton antérieur à l'enregistrement des autorisations : un rafraîchissement les fait connaître.
+  if (connected && token.scopes === undefined && !process.env.WCLAUDE_YT_TEST_TOKEN) {
+    await accessToken().catch(() => {});
+    token = await readJSON('token').catch(() => token);
+  }
+  const granted = connected && typeof token.scopes === 'string' ? token.scopes.split(/\s+/) : null;
+  const missingScopes = granted ? SCOPES.filter((s) => !granted.includes(s)) : [];
+  return { clientConfigured: !!client, connected, needsReconnect: missingScopes.length > 0, missingScopes, channel: token ? token.channel || null : null };
 }
 
 async function tokenRequest(params) {
@@ -101,7 +110,7 @@ async function connect({ openExternal, page }) {
   }).finally(() => server.close());
   const tok = await tokenRequest({ code, client_id: client.client_id, client_secret: client.client_secret, redirect_uri: redirect, grant_type: 'authorization_code', code_verifier: verifier });
   tokenCache = { access_token: tok.access_token, expires_at: Date.now() + tok.expires_in * 1000 };
-  const token = { refresh_token: tok.refresh_token, channel: null };
+  const token = { refresh_token: tok.refresh_token, scopes: tok.scope || SCOPES.join(' '), channel: null };
   await writeJSON('token', token);
   const ch = await channel().catch(() => null);
   token.channel = ch ? { id: ch.id, title: ch.title } : null;
@@ -128,6 +137,7 @@ async function accessToken() {
   try {
     const tok = await tokenRequest({ client_id: client.client_id, client_secret: client.client_secret, refresh_token: token.refresh_token, grant_type: 'refresh_token' });
     tokenCache = { access_token: tok.access_token, expires_at: Date.now() + tok.expires_in * 1000 };
+    if (tok.scope && tok.scope !== token.scopes) await writeJSON('token', { ...token, scopes: tok.scope }).catch(() => {});
     return tok.access_token;
   } catch (e) {
     if (e.code === 'invalid_grant') { await keychain.secretDelete(SERVICE, 'token'); throw new Error('not_connected'); }
@@ -144,7 +154,16 @@ async function call(method, base, route, { query, body, headers = {} } = {}) {
     body: body ? (body instanceof Buffer ? body : JSON.stringify(body)) : undefined,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data.error && (data.error.message || data.error.status)) || `YouTube ${res.status}`);
+  if (!res.ok) {
+    const e = data.error || {};
+    const reason = ((e.errors || [])[0] || {}).reason;
+    // Connexion faite avant l'ajout d'une autorisation (ex. sous-titres) : il faut reconnecter la chaîne.
+    if (res.status === 403 && (reason === 'insufficientPermissions' || /insufficient (authentication )?scopes/i.test(e.message || ''))) throw new Error('reconnect_needed');
+    const err = new Error(e.message || e.status || `YouTube ${res.status}`);
+    err.reason = reason;
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 
@@ -222,6 +241,45 @@ async function setThumbnail(id, file) {
   if (buf.length > 2 * 1024 * 1024) throw new Error('thumbnail_too_big');
   const type = /\.png$/i.test(file) ? 'image/png' : 'image/jpeg';
   return call('POST', URLS.upload, '/thumbnails/set', { query: { videoId: id, uploadType: 'media' }, body: buf, headers: { 'Content-Type': type } });
+}
+
+// ---------- sous-titres ----------
+const simplifyCaption = (c) => ({
+  id: c.id, language: c.snippet.language, name: c.snippet.name || '', kind: c.snippet.trackKind,
+  draft: !!c.snippet.isDraft, status: c.snippet.status, lastUpdated: c.snippet.lastUpdated,
+});
+
+async function listCaptions(videoId) {
+  if (!videoId) throw new Error('video_id_required');
+  const d = await call('GET', URLS.api, '/captions', { query: { part: 'snippet', videoId } });
+  return (d.items || []).map(simplifyCaption);
+}
+
+/**
+ * Ajoute une piste de sous-titres (SRT, VTT, SBV, SCC, TTML…) à une vidéo. Avec `replace`, une piste de même langue
+ * et de même nom est remplacée au lieu d'en créer une seconde (YouTube refuse les doublons).
+ */
+async function uploadCaption({ videoId, path: file, language, name = '', draft = false, replace = false }) {
+  if (!videoId) throw new Error('video_id_required');
+  if (!language) throw new Error('language_required');
+  const st = fs.statSync(file);
+  if (!st.isFile()) throw new Error('file_not_found');
+  if (st.size > 100 * 1024 * 1024) throw new Error('caption_too_big');
+  name = String(name || '');
+  const existing = replace
+    ? (await listCaptions(videoId)).find((c) => c.kind !== 'asr' && c.language.toLowerCase() === language.toLowerCase() && c.name === name)
+    : null;
+  const meta = existing ? { id: existing.id, snippet: { isDraft: !!draft } } : { snippet: { videoId, language, name, isDraft: !!draft } };
+  const boundary = 'wclaude' + crypto.randomBytes(12).toString('hex');
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/octet-stream\r\n\r\n`),
+    fs.readFileSync(file),
+    Buffer.from(`\r\n--${boundary}--\r\n`),
+  ]);
+  const res = await call(existing ? 'PUT' : 'POST', URLS.upload, '/captions', {
+    query: { part: 'snippet', uploadType: 'multipart' }, body, headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+  });
+  return { ...simplifyCaption(res), replaced: !!existing };
 }
 
 // ---------- envoi de vidéo (par morceaux, reprise automatique) ----------
@@ -302,4 +360,4 @@ const publicJob = (j) => j && { id: j.id, name: j.name, path: j.path, size: j.si
 const uploadStatus = (id) => publicJob(jobs.get(Number(id)));
 const uploading = () => [...jobs.values()].some((j) => j.state === 'uploading' || j.state === 'starting');
 
-module.exports = { importClient, saveClient, status, connect, disconnect, channel, listVideos, getVideo, analytics, updateVideo, setThumbnail, startUpload, uploadStatus, uploading, SCOPES };
+module.exports = { importClient, saveClient, status, connect, disconnect, channel, listVideos, getVideo, analytics, updateVideo, setThumbnail, listCaptions, uploadCaption, startUpload, uploadStatus, uploading, SCOPES };

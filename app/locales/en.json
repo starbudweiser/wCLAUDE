@@ -180,5 +180,7 @@
   "settings.youtubeClientId": "Client ID",
   "settings.youtubeClientSecret": "Client secret",
   "settings.youtubeSave": "Save the key",
-  "settings.youtubeBadValues": "The client ID must end with .apps.googleusercontent.com, and the client secret cannot be empty."
+  "settings.youtubeBadValues": "The client ID must end with .apps.googleusercontent.com, and the client secret cannot be empty.",
+  "settings.youtubeReconnect": "Reconnect YouTube",
+  "settings.youtubeNeedsReconnect": "Subtitles need one more permission: click Reconnect YouTube and approve in your browser."
 }

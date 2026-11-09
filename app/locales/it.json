@@ -180,5 +180,7 @@
   "settings.youtubeClientId": "ID client",
   "settings.youtubeClientSecret": "Segreto del client",
   "settings.youtubeSave": "Salva la chiave",
-  "settings.youtubeBadValues": "L'ID client deve terminare con .apps.googleusercontent.com e il segreto non può essere vuoto."
+  "settings.youtubeBadValues": "L'ID client deve terminare con .apps.googleusercontent.com e il segreto non può essere vuoto.",
+  "settings.youtubeReconnect": "Ricollega YouTube",
+  "settings.youtubeNeedsReconnect": "I sottotitoli richiedono un'autorizzazione in più: fate clic su Ricollega YouTube e accettate nel browser."
 }

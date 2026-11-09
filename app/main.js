@@ -812,6 +812,8 @@ const routes = {
   'POST /youtube/upload': (b) => { const job = youtube.startUpload(b); watchUpload(job); return youtube.uploadStatus(job.id); },
   'GET /youtube/upload': (_b, q) => youtube.uploadStatus(q.id) || { error: 'no_job' },
   'GET /youtube/analytics': (_b, q) => youtube.analytics(q),
+  'GET /youtube/captions': (_b, q) => youtube.listCaptions(q.videoId),
+  'POST /youtube/caption': (b) => youtube.uploadCaption(b),
   'POST /activity': (b) => {
     const key = 'act.' + String(b.action || '');
     agent.label = i18n.strings[key] ? t(key) : String(b.action || '').slice(0, 40);

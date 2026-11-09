@@ -8,6 +8,7 @@ const TOKEN = 'Bearer test';
 const sessions = new Map();
 let failedOnce = false;
 const videos = [];
+const captions = [];
 
 const json = (res, code, obj, headers = {}) => { res.writeHead(code, { 'Content-Type': 'application/json', ...headers }); res.end(JSON.stringify(obj)); };
 
@@ -44,6 +45,32 @@ http.createServer((req, res) => {
       json(res, 200, video);
     });
     return;
+  }
+  if (url.pathname === '/upload/youtube/v3/captions' && (req.method === 'POST' || req.method === 'PUT')) {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      const raw = Buffer.concat(chunks).toString('utf8');
+      const boundary = String(req.headers['content-type']).match(/boundary=(\S+)/)[1];
+      const parts = raw.split(`--${boundary}`).slice(1, -1).map((p) => p.slice(p.indexOf('\r\n\r\n') + 4, -2));
+      const meta = JSON.parse(parts[0]);
+      if (req.method === 'PUT') {
+        const c = captions.find((x) => x.id === meta.id);
+        if (!c) return json(res, 404, { error: { message: 'caption not found' } });
+        c.snippet.isDraft = meta.snippet.isDraft; c.body = parts[1];
+        return json(res, 200, c);
+      }
+      const sn = meta.snippet;
+      if (captions.some((x) => x.snippet.videoId === sn.videoId && x.snippet.language === sn.language && x.snippet.name === sn.name)) return json(res, 409, { error: { message: 'captionExists', errors: [{ reason: 'captionExists' }] } });
+      const c = { id: 'cap' + crypto.randomBytes(3).toString('hex'), snippet: { ...sn, trackKind: 'standard', status: 'serving', lastUpdated: new Date().toISOString() }, body: parts[1] };
+      captions.push(c);
+      console.log(`caption ${c.id} ${sn.language} ${parts[1].length} chars`);
+      json(res, 200, c);
+    });
+    return;
+  }
+  if (req.method === 'GET' && url.pathname === '/youtube/v3/captions') {
+    return json(res, 200, { items: captions.filter((c) => c.snippet.videoId === url.searchParams.get('videoId')) });
   }
   if (req.method === 'GET' && url.pathname === '/youtube/v3/channels') {
     return json(res, 200, { items: [{ id: 'UCfake', snippet: { title: 'Chaîne d\'essai', customUrl: '@essai' }, statistics: { subscriberCount: '42', viewCount: '1234', videoCount: String(videos.length) }, contentDetails: { relatedPlaylists: { uploads: 'UUfake' } } }] });

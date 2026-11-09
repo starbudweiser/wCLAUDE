@@ -88,6 +88,7 @@ The server starts wCLAUDE in the background when needed (it never takes the focu
 | `youtube_channel` / `youtube_list_videos` / `youtube_get_video` | Channel figures, videos with privacy, schedule and statistics, video details. |
 | `youtube_upload_video` / `youtube_upload_status` | Upload a local video of any size in the background (private by default) and follow it. |
 | `youtube_update_video` / `youtube_set_thumbnail` | Change title, description, tags, category, privacy, scheduled date; set a thumbnail. |
+| `youtube_list_captions` / `youtube_upload_caption` | List a video's subtitle tracks; add or replace one from a local SRT, VTT, SBV, SCC or TTML file. |
 | `youtube_analytics` | Views, watch time, average view duration, likes, subscribers gained… per day, video or country. |
 
 ## Guardrails that do not change
@@ -115,7 +116,9 @@ The `youtube_*` tools use the official YouTube Data API v3 and YouTube Analytics
 4. **Clients › Create client › Desktop app**, then download the JSON file.
 5. In wCLAUDE: **Settings › YouTube › Choose the OAuth key file…**, then **Connect YouTube** and approve in your usual browser.
 
-The key and tokens are stored in your Keychain and never shared with the agent. Uploads are private unless you approve otherwise. The default quota (10,000 units a day) allows about six uploads a day.
+The key and tokens are stored in your Keychain and never shared with the agent. Uploads are private unless you approve otherwise. The default quota (10,000 units a day) allows about six uploads a day; a subtitle track costs 400 units.
+
+Connected with version 1.0.0? Subtitles need one more permission: click **Settings › YouTube › Reconnect YouTube** once.
 
 ## Keychain sign-in
 

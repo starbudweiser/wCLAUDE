@@ -99,7 +99,10 @@ function renderYouTube(s) {
   $('ytClient').textContent = t(s.clientConfigured ? 'settings.youtubeClient' : 'settings.youtubeNoClient');
   $('ytChannel').textContent = s.connected ? t('settings.youtubeChannel', { channel: (s.channel && s.channel.title) || '—' }) : t('settings.youtubeNotConnected');
   $('ytChannel').className = s.connected ? 'ok' : 'muted';
-  $('ytConnect').hidden = !s.clientConfigured || s.connected;
+  $('ytConnect').hidden = !s.clientConfigured || (s.connected && !s.needsReconnect);
+  $('ytConnect').textContent = t(s.connected && s.needsReconnect ? 'settings.youtubeReconnect' : 'settings.youtubeConnect');
+  $('ytScope').textContent = t('settings.youtubeNeedsReconnect');
+  $('ytScope').hidden = !(s.connected && s.needsReconnect);
   $('ytForm').hidden = s.clientConfigured;
   $('ytDisconnect').hidden = !s.connected;
   brand();
