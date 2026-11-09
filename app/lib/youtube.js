@@ -42,6 +42,14 @@ async function importClient(file) {
   return status();
 }
 
+async function saveClient(clientId, clientSecret) {
+  clientId = String(clientId || '').trim();
+  clientSecret = String(clientSecret || '').trim();
+  if (!/\.apps\.googleusercontent\.com$/.test(clientId) || clientSecret.length < 10) throw new Error('client_values');
+  await writeJSON('client', { client_id: clientId, client_secret: clientSecret });
+  return status();
+}
+
 async function status() {
   const client = await readJSON('client').catch(() => null);
   const token = await readJSON('token').catch(() => null);
@@ -294,4 +302,4 @@ const publicJob = (j) => j && { id: j.id, name: j.name, path: j.path, size: j.si
 const uploadStatus = (id) => publicJob(jobs.get(Number(id)));
 const uploading = () => [...jobs.values()].some((j) => j.state === 'uploading' || j.state === 'starting');
 
-module.exports = { importClient, status, connect, disconnect, channel, listVideos, getVideo, analytics, updateVideo, setThumbnail, startUpload, uploadStatus, uploading, SCOPES };
+module.exports = { importClient, saveClient, status, connect, disconnect, channel, listVideos, getVideo, analytics, updateVideo, setThumbnail, startUpload, uploadStatus, uploading, SCOPES };

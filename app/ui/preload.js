@@ -2,7 +2,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 const SEND = new Set(['nav', 'tab:new', 'tab:select', 'tab:close', 'mobile:toggle', 'keychain:fill', 'downloads:menu', 'downloads:open', 'notice:action', 'state:request', 'panel:close', 'toolbar:height', 'handoff:answer']);
-const INVOKE = new Set(['about:info', 'settings:get', 'settings:set', 'settings:removeMobile', 'settings:copyConfig', 'update:state', 'update:check', 'update:install', 'kc:add', 'yt:status', 'yt:import', 'yt:connect', 'yt:disconnect']);
+const INVOKE = new Set(['about:info', 'settings:get', 'settings:set', 'settings:removeMobile', 'settings:copyConfig', 'update:state', 'update:check', 'update:install', 'kc:add', 'yt:status', 'yt:import', 'yt:saveClient', 'yt:connect', 'yt:disconnect']);
 const ON = new Set(['state', 'focus-address', 'update:state']);
 
 const i18n = ipcRenderer.sendSync('i18n');

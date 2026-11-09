@@ -40,6 +40,11 @@
     <p class="muted" id="ytHow"></p>
     <p id="ytClient"></p>
     <p id="ytChannel"></p>
+    <form id="ytForm" class="stack" autocomplete="off" style="gap: var(--space-2)">
+      <label class="sc-field"><span class="sc-field__label" id="ytIdLabel"></span><input class="sc-field__input" id="ytId" type="text" spellcheck="false"></label>
+      <label class="sc-field"><span class="sc-field__label" id="ytSecretLabel"></span><input class="sc-field__input" id="ytSecret" type="password"></label>
+      <div class="row"><button class="sc-btn sc-btn--secondary" type="submit" id="ytSave"></button></div>
+    </form>
     <p id="ytMsg" hidden></p>
     <div class="row">
       <button class="sc-btn sc-btn--secondary" type="button" id="ytChoose"></button>

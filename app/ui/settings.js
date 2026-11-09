@@ -76,6 +76,18 @@ $('ytHow').textContent = t('settings.youtubeHow');
 $('ytChoose').textContent = t('settings.youtubeChoose');
 $('ytConnect').textContent = t('settings.youtubeConnect');
 $('ytDisconnect').textContent = t('settings.youtubeDisconnect');
+$('ytIdLabel').textContent = t('settings.youtubeClientId');
+$('ytSecretLabel').textContent = t('settings.youtubeClientSecret');
+$('ytSave').textContent = t('settings.youtubeSave');
+$('ytForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const r = await invoke('yt:saveClient', { clientId: $('ytId').value, clientSecret: $('ytSecret').value });
+  $('ytSecret').value = '';
+  if (r.error) return ytMessage('settings.youtubeBadValues', 'err');
+  $('ytId').value = '';
+  ytMessage('');
+  renderYouTube(r);
+};
 function ytMessage(key, cls = '') {
   const m = $('ytMsg');
   m.textContent = key ? t(key) : '';
@@ -88,6 +100,7 @@ function renderYouTube(s) {
   $('ytChannel').textContent = s.connected ? t('settings.youtubeChannel', { channel: (s.channel && s.channel.title) || '—' }) : t('settings.youtubeNotConnected');
   $('ytChannel').className = s.connected ? 'ok' : 'muted';
   $('ytConnect').hidden = !s.clientConfigured || s.connected;
+  $('ytForm').hidden = s.clientConfigured;
   $('ytDisconnect').hidden = !s.connected;
   brand();
   fit();

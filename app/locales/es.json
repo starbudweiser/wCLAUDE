@@ -161,7 +161,7 @@
   "act.handoff": "espera de su acción",
   "settings.youtube": "YouTube",
   "settings.youtubeHint": "wCLAUDE usa la API oficial de YouTube: envío de vídeos de cualquier tamaño, títulos, miniaturas y estadísticas, sin pasar por la página web.",
-  "settings.youtubeHow": "Clave OAuth: en Google Cloud, active «YouTube Data API v3» y «YouTube Analytics API», cree un ID de cliente OAuth de tipo «Aplicación de escritorio» y elija el archivo JSON descargado.",
+  "settings.youtubeHow": "Clave OAuth: en Google Cloud, active «YouTube Data API v3» y «YouTube Analytics API», cree un ID de cliente OAuth de tipo «Aplicación de escritorio» y pegue su ID y su secreto aquí debajo, o elija el archivo JSON descargado.",
   "settings.youtubeChoose": "Elegir el archivo de clave OAuth…",
   "settings.youtubeConnect": "Conectar YouTube",
   "settings.youtubeDisconnect": "Desconectar",
@@ -176,5 +176,9 @@
   "yt.pageFail": "La conexión con YouTube no se ha completado. Vuelva a wCLAUDE para intentarlo de nuevo.",
   "yt.uploaded": "Vídeo enviado a YouTube: {name}",
   "yt.uploadFailed": "El envío de {name} a YouTube ha fallado.",
-  "act.youtube": "API de YouTube"
+  "act.youtube": "API de YouTube",
+  "settings.youtubeClientId": "ID de cliente",
+  "settings.youtubeClientSecret": "Secreto del cliente",
+  "settings.youtubeSave": "Guardar la clave",
+  "settings.youtubeBadValues": "El ID de cliente debe terminar en .apps.googleusercontent.com y el secreto no puede estar vacío."
 }

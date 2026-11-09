@@ -161,7 +161,7 @@
   "act.handoff": "waiting for you",
   "settings.youtube": "YouTube",
   "settings.youtubeHint": "wCLAUDE uses the official YouTube API: uploads of any size, titles, thumbnails and statistics, without going through the web page.",
-  "settings.youtubeHow": "OAuth key: in Google Cloud, enable “YouTube Data API v3” and “YouTube Analytics API”, create an OAuth client ID of type “Desktop app”, then choose the downloaded JSON file.",
+  "settings.youtubeHow": "OAuth key: in Google Cloud, enable “YouTube Data API v3” and “YouTube Analytics API”, create an OAuth client ID of type “Desktop app”, then paste its ID and secret below, or choose the downloaded JSON file.",
   "settings.youtubeChoose": "Choose the OAuth key file…",
   "settings.youtubeConnect": "Connect YouTube",
   "settings.youtubeDisconnect": "Disconnect",
@@ -176,5 +176,9 @@
   "yt.pageFail": "Connecting to YouTube did not succeed. Go back to wCLAUDE to try again.",
   "yt.uploaded": "Video uploaded to YouTube: {name}",
   "yt.uploadFailed": "Uploading {name} to YouTube failed.",
-  "act.youtube": "YouTube API"
+  "act.youtube": "YouTube API",
+  "settings.youtubeClientId": "Client ID",
+  "settings.youtubeClientSecret": "Client secret",
+  "settings.youtubeSave": "Save the key",
+  "settings.youtubeBadValues": "The client ID must end with .apps.googleusercontent.com, and the client secret cannot be empty."
 }

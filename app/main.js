@@ -729,6 +729,9 @@ ipcMain.handle('yt:import', async (e) => {
   if (r.canceled || !r.filePaths[0]) return { cancelled: true };
   try { return await youtube.importClient(r.filePaths[0]); } catch { return { error: 'client_file' }; }
 });
+ipcMain.handle('yt:saveClient', async (_e, { clientId, clientSecret }) => {
+  try { return await youtube.saveClient(clientId, clientSecret); } catch { return { error: 'client_values' }; }
+});
 ipcMain.handle('yt:connect', async () => { try { return await youtubeConnect(); } catch (err) { return { error: String(err.message || err) }; } });
 ipcMain.handle('yt:disconnect', () => youtube.disconnect());
 
