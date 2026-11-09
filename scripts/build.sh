@@ -17,7 +17,7 @@ echo "▸ Paquet"
 APP="$(node scripts/package.mjs | tail -1)"
 
 echo "▸ Signature de l'outil Trousseau, puis de l'appli"
-HELPER="$APP/Contents/Resources/app/bin/wCLAUDE"
+HELPER="$APP/Contents/Resources/app/app/bin/wCLAUDE"
 KC="$HOME/Library/Keychains/skyrim-signing.keychain-db"; PASS_FILE="$HOME/.skyrim-signing/keychain.pw"
 if [ -f "$KC" ] && [ -f "$PASS_FILE" ]; then
   security unlock-keychain -p "$(cat "$PASS_FILE")" "$KC"

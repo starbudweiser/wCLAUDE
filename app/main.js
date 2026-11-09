@@ -675,9 +675,7 @@ ipcMain.handle('kc:add', async (_e, { site, account, password }) => {
 });
 
 function mcpLauncher() {
-  return app.isPackaged
-    ? path.join(process.resourcesPath, 'app', 'bin', 'wclaude-mcp')
-    : path.join(__dirname, 'bin', 'wclaude-mcp');
+  return path.join(__dirname, 'bin', 'wclaude-mcp');
 }
 
 updater.onChange((s) => {

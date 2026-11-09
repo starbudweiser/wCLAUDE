@@ -59,7 +59,10 @@ function appPath() {
 function launchApp() {
   const target = appPath();
   const args = target ? ['-g', '-a', target, '--args', '--background'] : ['-g', '-b', pkg.wclaude.bundleId, '--args', '--background'];
-  return new Promise((resolve) => execFile('/usr/bin/open', args, () => resolve()));
+  // The server may run on the app's own engine (ELECTRON_RUN_AS_NODE): never pass that to the app itself.
+  const env = { ...process.env };
+  delete env.ELECTRON_RUN_AS_NODE;
+  return new Promise((resolve) => execFile('/usr/bin/open', args, { env }, () => resolve()));
 }
 
 async function ensureApp() {
