@@ -8,6 +8,8 @@ $('agentHint').textContent = t('settings.agentHint');
 $('agentAllow').querySelector('.sc-option__label').textContent = t('settings.agentAllow');
 $('agentAllowHint').textContent = t('settings.agentAllowHint');
 $('copyConfig').innerHTML = `${icon('copy')}<span>${esc(t('settings.copyConfig'))}</span>`;
+$('iconTitle').textContent = t('settings.icon');
+$('iconHint').textContent = t('settings.iconHint');
 $('mobileTitle').textContent = t('settings.mobile');
 $('mobileHint').textContent = t('settings.mobileHint');
 $('dlTitle').textContent = t('settings.downloads');
@@ -46,6 +48,18 @@ function renderUpdate(u) {
   fit();
 }
 
+function renderIconModes(current) {
+  const box = $('iconModes');
+  box.innerHTML = ['menubar', 'dock', 'both'].map((m) => `<div class="sc-option${m === current ? ' is-selected' : ''}" role="radio" tabindex="0" aria-checked="${m === current}" data-mode="${m}"><span class="sc-choice sc-choice--radio"></span><span class="sc-option__label">${esc(t('settings.icon.' + m))}</span></div>`).join('');
+  const pick = async (el) => {
+    if (!el || el.dataset.mode === current) return;
+    await invoke('settings:set', { key: 'iconMode', value: el.dataset.mode });
+    renderIconModes(el.dataset.mode);
+  };
+  box.onclick = (e) => pick(e.target.closest('[data-mode]'));
+  box.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(e.target.closest('[data-mode]')); } };
+}
+
 async function load() {
   const s = await invoke('settings:get');
   checkbox($('agentAllow'), s.agentControl, (v) => invoke('settings:set', { key: 'agentControl', value: v }));
@@ -64,6 +78,7 @@ async function load() {
     await invoke('settings:removeMobile', b.dataset.site);
     load();
   };
+  renderIconModes(s.iconMode);
   renderUpdate(s.update);
   brand();
   fit();

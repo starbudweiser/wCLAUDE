@@ -18,6 +18,7 @@ const DEFAULTS = {
   lastUpdateCheck: 0,
   lastTabs: [],
   windowSize: null,
+  iconMode: 'menubar', // dock | menubar | both
 };
 
 let cache = null;

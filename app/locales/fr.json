@@ -182,5 +182,12 @@
   "settings.youtubeSave": "Enregistrer la clé",
   "settings.youtubeBadValues": "L'ID client doit se terminer par .apps.googleusercontent.com, et le code secret ne peut pas être vide.",
   "settings.youtubeReconnect": "Reconnecter YouTube",
-  "settings.youtubeNeedsReconnect": "Les sous-titres demandent une autorisation de plus : cliquez sur Reconnecter YouTube et acceptez dans votre navigateur."
+  "settings.youtubeNeedsReconnect": "Les sous-titres demandent une autorisation de plus : cliquez sur Reconnecter YouTube et acceptez dans votre navigateur.",
+  "tray.show": "Afficher wCLAUDE",
+  "tray.hide": "Masquer wCLAUDE",
+  "settings.icon": "Icône de l'appli",
+  "settings.iconHint": "Où wCLAUDE apparaît. Avec la barre de menus, un clic sur l'icône affiche ou masque la fenêtre, un clic droit ouvre son menu.",
+  "settings.icon.dock": "Dans le Dock",
+  "settings.icon.menubar": "Dans la barre de menus",
+  "settings.icon.both": "Les deux"
 }

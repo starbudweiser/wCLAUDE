@@ -10,6 +10,7 @@ const keychain = require('./lib/keychain');
 const updater = require('./lib/updater');
 const control = require('./lib/control');
 const youtube = require('./lib/youtube');
+const presence = require('./lib/presence');
 const pkg = require('../package.json');
 
 const UI = path.join(__dirname, 'ui');
@@ -371,6 +372,32 @@ function openStartTabs() {
   else createTab('');
 }
 
+/** Amène la fenêtre principale devant (la recrée si elle a été fermée, la rouvre si elle est masquée ou réduite). */
+function showWindow() {
+  if (!win || win.isDestroyed()) { ensureWindow(); openStartTabs(); }
+  if (win.isMinimized()) win.restore();
+  win.show();
+  app.focus({ steal: true });
+}
+
+/** Menu de l'icône de la barre de menus (clic droit). */
+function trayMenu() {
+  const shown = win && !win.isDestroyed() && win.isVisible() && !win.isMinimized();
+  const front = (fn) => () => { app.focus({ steal: true }); fn(); };
+  return [
+    shown
+      ? { label: t('tray.hide'), click: () => win.hide() }
+      : { label: t('tray.show'), click: () => showWindow() },
+    { label: t('menu.newTab'), click: () => { showWindow(); createTab(''); focusAddress(); } },
+    { type: 'separator' },
+    { label: t('menu.settings'), click: front(() => openPanel('settings', 1160)) },
+    { label: t('menu.checkUpdates'), click: front(() => openPanel('update', 480, { manual: '1' })) },
+    { label: t('menu.about'), click: front(() => openPanel('about', 356)) },
+    { type: 'separator' },
+    { label: t('menu.quit'), click: () => app.quit() },
+  ];
+}
+
 // ---------- fenêtres secondaires (À propos, Réglages, mise à jour, Trousseau) ----------
 const panels = {};
 function openPanel(name, width, query = {}) {
@@ -680,9 +707,11 @@ ipcMain.handle('settings:get', () => ({
   downloadsDir: config.DOWNLOADS_DIR,
   lastAgent: config.get('lastAgent') || '',
   update: updater.publicState(),
+  iconMode: presence.normalize(config.get('iconMode')),
 }));
 ipcMain.handle('settings:set', (_e, { key, value }) => {
   if (['autoInstall', 'agentControl'].includes(key)) config.set(key, !!value);
+  if (key === 'iconMode' && presence.MODES.includes(value)) config.set('iconMode', presence.apply(value));
   return true;
 });
 ipcMain.handle('settings:removeMobile', (_e, site) => setMobileSite(site, false));
@@ -839,6 +868,8 @@ app.whenReady().then(async () => {
   }
   setupSession(session.defaultSession);
   buildMenu();
+  presence.init({ getWindow: () => (win && !win.isDestroyed() ? win : null), showWindow, buildMenu: trayMenu, tooltip: () => 'wCLAUDE' });
+  presence.apply(config.get('iconMode'));
   ensureWindow();
   openStartTabs();
   if (AGENT_CONTROL) {
@@ -860,6 +891,7 @@ app.on('second-instance', () => {
 });
 app.on('activate', () => {
   if (!win || win.isDestroyed()) { ensureWindow(); openStartTabs(); }
+  else if (!win.isVisible()) win.show(); // fenêtre masquée depuis la barre de menus, rouverte par le Dock
 });
 app.on('window-all-closed', () => { /* macOS : l'appli reste ouverte, l'agent peut rouvrir une fenêtre */ });
 app.on('before-quit', () => { if (win && !win.isDestroyed()) saveTabs(); control.stop(); });

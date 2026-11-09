@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="190 190 644 644">
+  <!-- Silhouette de la barre de menus : le logo sans son carré de fond, traits épaissis pour 18 pt -->
+  <rect x="222" y="262" width="580" height="500" rx="56" fill="none" stroke="#dddddd" stroke-width="56"/>
+  <path d="M237 384 H787" stroke="#dddddd" stroke-width="48"/>
+  <path d="M340 494 L420 676 L512 540 L604 676 L684 494" fill="none" stroke="#d97757" stroke-width="80" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

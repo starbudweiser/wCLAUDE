@@ -182,5 +182,12 @@
   "settings.youtubeSave": "Save the key",
   "settings.youtubeBadValues": "The client ID must end with .apps.googleusercontent.com, and the client secret cannot be empty.",
   "settings.youtubeReconnect": "Reconnect YouTube",
-  "settings.youtubeNeedsReconnect": "Subtitles need one more permission: click Reconnect YouTube and approve in your browser."
+  "settings.youtubeNeedsReconnect": "Subtitles need one more permission: click Reconnect YouTube and approve in your browser.",
+  "tray.show": "Show wCLAUDE",
+  "tray.hide": "Hide wCLAUDE",
+  "settings.icon": "App icon",
+  "settings.iconHint": "Where wCLAUDE appears. In the menu bar, click the icon to show or hide the window, right-click it for its menu.",
+  "settings.icon.dock": "In the Dock",
+  "settings.icon.menubar": "In the menu bar",
+  "settings.icon.both": "Both"
 }
