@@ -317,7 +317,10 @@ function contextMenu(tab, p) {
 }
 
 // ---------- fenêtre principale ----------
-function ensureWindow() {
+let shownOnce = false; // la fenêtre a déjà été affichée une fois depuis le lancement
+// quiet : fenêtre recréée pour un agent (ou appli lancée par lui) : elle reste cachée, l'agent travaille sans
+// rien faire passer devant le travail de l'utilisateur ; elle s'ouvre d'un clic sur l'icône (barre de menus ou Dock).
+function ensureWindow({ quiet = false } = {}) {
   if (win && !win.isDestroyed()) return win;
   const area = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
   const saved = config.get('windowSize') || { width: 1360, height: 900 };
@@ -336,11 +339,9 @@ function ensureWindow() {
     webPreferences: { preload: path.join(UI, 'preload.js'), sandbox: true, contextIsolation: true },
   });
   win.loadFile(path.join(UI, 'toolbar.html'));
-  win.once('ready-to-show', () => {
-    if (BACKGROUND && !win.__shownOnce) win.showInactive();
-    else win.show();
-    win.__shownOnce = true;
-  });
+  const hidden = quiet || (BACKGROUND && !shownOnce);
+  win.once('ready-to-show', () => { if (!hidden) win.show(); });
+  win.once('show', () => { shownOnce = true; });
   let sizeTimer;
   win.on('resize', () => {
     layout();
@@ -675,7 +676,7 @@ function startHandoff({ reason, kind, agentName, tabId }) {
   // Prévenir sans voler le focus : notification du système et rebond discret dans le Dock.
   try {
     const n = new Notification({ title: 'wCLAUDE', body: t('handoff.notify', { agent: handoff.agent || t('agent.generic'), reason: handoff.reason || t('handoff.kind.' + handoff.kind) }) });
-    n.on('click', () => { if (win && !win.isDestroyed()) win.show(); });
+    n.on('click', () => showWindow());
     n.show();
   } catch { /* notifications refusées */ }
   if (app.dock) app.dock.bounce('informational');
@@ -795,7 +796,7 @@ const routes = {
   }),
   'POST /tabs/ensure': async () => {
     const created = !win || win.isDestroyed() || !tabs.length;
-    if (!win || win.isDestroyed()) ensureWindow();
+    if (!win || win.isDestroyed()) ensureWindow({ quiet: true });
     if (!tabs.length) openStartTabs();
     await Promise.all(tabs.map((x) => x.ready));
     return { created, tabs: tabs.map(publicTab), activeId };
