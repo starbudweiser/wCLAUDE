@@ -23,6 +23,17 @@ $('keychain').innerHTML = `${icon('key')}<span>${esc(t('keychain.button'))}</spa
 $('keychain').title = t('keychain.tooltip');
 $('address').placeholder = t('address.placeholder');
 $('gutter').querySelector('.label').textContent = t('mobile.caption');
+$('handoff').querySelector('.hi').innerHTML = icon('sparkles');
+$('handoffCancel').textContent = t('handoff.cancel');
+$('handoffDone').textContent = t('handoff.done');
+$('handoffCancel').onclick = () => state && state.handoff && send('handoff:answer', { id: state.handoff.id, done: false });
+$('handoffDone').onclick = () => state && state.handoff && send('handoff:answer', { id: state.handoff.id, done: true });
+
+// Hauteur réelle de la barre (onglets + navigation + relais) : la page web se place juste en dessous.
+const chromeHeight = () => ['tabsbar', 'navbar', 'handoff'].reduce((h, id) => h + ($(id).hidden ? 0 : $(id).getBoundingClientRect().height), 0);
+const reportHeight = () => send('toolbar:height', chromeHeight());
+new ResizeObserver(reportHeight).observe(document.body);
+for (const id of ['tabsbar', 'navbar', 'handoff']) new ResizeObserver(reportHeight).observe($(id));
 
 $('newtab').onclick = () => send('tab:new');
 $('back').onclick = () => send('nav', { action: 'back' });
@@ -127,7 +138,15 @@ function render() {
   const dl = $('downloads');
   dl.classList.toggle('is-active', state.downloads.active > 0);
   dl.innerHTML = `${icon('download')}<span>${esc(t('downloads.button'))}</span>${state.downloads.count ? `<span class="count">${state.downloads.active || state.downloads.count}</span>` : ''}`;
+  const ho = $('handoff');
+  const h = state.handoff;
+  if (h) {
+    ho.querySelector('.title').textContent = t('handoff.title', { agent: h.agent });
+    ho.querySelector('.reason').textContent = h.reason || t('handoff.kind.' + h.kind);
+  }
+  if (ho.hidden !== !h) { ho.hidden = !h; reportHeight(); }
   const gutter = $('gutter');
+  gutter.style.top = chromeHeight() + 'px';
   gutter.hidden = !state.mobile || state.fullscreen || (window.innerWidth - 390) / 2 < 200;
   gutter.style.width = Math.max(0, (window.innerWidth - 390) / 2) + 'px';
   gutter.querySelector('.site').textContent = state.site || '';

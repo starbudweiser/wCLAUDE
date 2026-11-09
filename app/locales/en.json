@@ -149,5 +149,14 @@
   "act.keychain": "Keychain sign-in",
   "act.dialog": "dialog",
   "act.console": "console",
-  "act.tabs": "tabs"
+  "act.tabs": "tabs",
+  "handoff.title": "{agent} is waiting for you",
+  "handoff.done": "DONE",
+  "handoff.cancel": "Cancel",
+  "handoff.notify": "{agent} is waiting for you: {reason}",
+  "handoff.kind.signin": "Sign in in the wCLAUDE window, then click DONE.",
+  "handoff.kind.captcha": "The site asks for a human check. Do it in the wCLAUDE window, then click DONE.",
+  "handoff.kind.blocked": "The site blocks access. Unblock it in the wCLAUDE window if you can, then click DONE.",
+  "handoff.kind.other": "Do the requested action in the wCLAUDE window, then click DONE.",
+  "act.handoff": "waiting for you"
 }

@@ -149,5 +149,14 @@
   "act.keychain": "accesso del Portachiavi",
   "act.dialog": "finestra di dialogo",
   "act.console": "console",
-  "act.tabs": "schede"
+  "act.tabs": "schede",
+  "handoff.title": "{agent} aspetta una vostra azione",
+  "handoff.done": "FATTO",
+  "handoff.cancel": "Annulla",
+  "handoff.notify": "{agent} aspetta una vostra azione: {reason}",
+  "handoff.kind.signin": "Accedete nella finestra di wCLAUDE, poi fate clic su FATTO.",
+  "handoff.kind.captcha": "Il sito chiede una verifica umana. Fatela nella finestra di wCLAUDE, poi fate clic su FATTO.",
+  "handoff.kind.blocked": "Il sito blocca l'accesso. Sbloccatelo nella finestra di wCLAUDE se possibile, poi fate clic su FATTO.",
+  "handoff.kind.other": "Eseguite l'azione richiesta nella finestra di wCLAUDE, poi fate clic su FATTO.",
+  "act.handoff": "attesa di una vostra azione"
 }

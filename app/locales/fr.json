@@ -149,5 +149,14 @@
   "act.keychain": "identifiant du Trousseau",
   "act.dialog": "fenêtre de dialogue",
   "act.console": "console",
-  "act.tabs": "onglets"
+  "act.tabs": "onglets",
+  "handoff.title": "{agent} attend votre action",
+  "handoff.done": "C'EST FAIT",
+  "handoff.cancel": "Annuler",
+  "handoff.notify": "{agent} attend votre action : {reason}",
+  "handoff.kind.signin": "Connectez-vous dans la fenêtre wCLAUDE, puis cliquez sur C'EST FAIT.",
+  "handoff.kind.captcha": "Le site demande une vérification humaine. Faites-la dans la fenêtre wCLAUDE, puis cliquez sur C'EST FAIT.",
+  "handoff.kind.blocked": "Le site bloque l'accès. Débloquez-le dans la fenêtre wCLAUDE si c'est possible, puis cliquez sur C'EST FAIT.",
+  "handoff.kind.other": "Faites l'action demandée dans la fenêtre wCLAUDE, puis cliquez sur C'EST FAIT.",
+  "act.handoff": "attente de votre action"
 }

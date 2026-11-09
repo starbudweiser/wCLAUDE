@@ -1,6 +1,6 @@
 // wCLAUDE — navigateur pilotable par un agent IA (MCP), interface Socle.
 const {
-  app, BrowserWindow, WebContentsView, Menu, ipcMain, session, shell, screen, clipboard, nativeTheme,
+  app, BrowserWindow, WebContentsView, Menu, ipcMain, session, shell, screen, clipboard, nativeTheme, Notification,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -19,16 +19,17 @@ const isNewTab = (url) => String(url || '').startsWith(NEWTAB_BASE);
 const CHROME_UA = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`;
 const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 const IPHONE = { width: 390, height: 844, scale: 3 };
-const TOOLBAR_H = 92; // rangée des onglets (40) + barre de navigation (52)
+let TOOLBAR_H = 92; // rangée des onglets (40) + barre de navigation (52) + barre du relais quand elle est affichée (mesurée par la page)
 const BACKGROUND = process.argv.includes('--background');
 
 // ---------- avant le démarrage ----------
+// Dossier de données d'abord : le verrou « une seule instance » en dépend (une édition d'essai a le sien).
+app.setName('wCLAUDE');
+app.setPath('userData', config.SUPPORT_DIR);
 if (!app.requestSingleInstanceLock()) {
   app.quit();
   process.exit(0);
 }
-app.setName('wCLAUDE');
-app.setPath('userData', config.SUPPORT_DIR);
 app.userAgentFallback = CHROME_UA;
 const AGENT_CONTROL = config.get('agentControl') !== false;
 const CDP_PORT = Number(process.env.WCLAUDE_CDP_PORT || config.get('cdpPort') || 9333);
@@ -53,12 +54,15 @@ let notice = null;
 let noticeTimer = null;
 const agent = { label: '', name: '', at: 0, tabId: null };
 let pushQueued = false;
+// Relais humain : l'agent attend que l'utilisateur agisse lui-même dans la fenêtre (connexion, CAPTCHA, blocage…).
+let handoff = null; // { id, reason, kind, agent, tabId, at, status: waiting | done | cancelled }
+let nextHandoffId = 1;
 
 const t = (k, v) => i18n.t(k, v);
 const tabById = (id) => tabs.find((x) => x.id === Number(id));
 const tabByWc = (wc) => tabs.find((x) => x.wc === wc || x.wc.id === (wc && wc.id));
 const activeTab = () => tabById(activeId);
-const isBusy = () => Date.now() - agent.at < 120000 || downloads.some((d) => d.state === 'progressing');
+const isBusy = () => Date.now() - agent.at < 120000 || downloads.some((d) => d.state === 'progressing') || (handoff && handoff.status === 'waiting');
 
 // ---------- barre d'outils ----------
 function publicTab(tab) {
@@ -97,6 +101,7 @@ function pushState() {
       },
       agent: { label: agent.label, name: agent.name || t('agent.generic'), at: agent.at, tabId: agent.tabId },
       notice,
+      handoff: handoff && handoff.status === 'waiting' ? { id: handoff.id, reason: handoff.reason, kind: handoff.kind, agent: handoff.agent || t('agent.generic') } : null,
     });
   });
 }
@@ -628,6 +633,34 @@ ipcMain.on('notice:action', (_e, id) => {
   if (id === 'update') openPanel('update', 480);
 });
 ipcMain.on('state:request', () => pushState());
+ipcMain.on('toolbar:height', (_e, h) => {
+  const v = Math.max(92, Math.min(400, Math.round(Number(h) || 92)));
+  if (v !== TOOLBAR_H) { TOOLBAR_H = v; layout(); }
+});
+ipcMain.on('handoff:answer', (_e, { id, done }) => answerHandoff(id, done ? 'done' : 'cancelled'));
+
+function startHandoff({ reason, kind, agentName, tabId }) {
+  if (handoff && handoff.status === 'waiting') handoff.status = 'cancelled';
+  handoff = { id: nextHandoffId++, reason: String(reason || '').slice(0, 300), kind: kind || 'other', agent: agentName || '', tabId: tabId || null, at: Date.now(), status: 'waiting' };
+  if (tabId && tabById(tabId)) selectTab(tabId);
+  ensureWindow();
+  // Prévenir sans voler le focus : notification du système et rebond discret dans le Dock.
+  try {
+    const n = new Notification({ title: 'wCLAUDE', body: t('handoff.notify', { agent: handoff.agent || t('agent.generic'), reason: handoff.reason || t('handoff.kind.' + handoff.kind) }) });
+    n.on('click', () => { if (win && !win.isDestroyed()) win.show(); });
+    n.show();
+  } catch { /* notifications refusées */ }
+  if (app.dock) app.dock.bounce('informational');
+  pushState();
+  return handoff;
+}
+
+function answerHandoff(id, status) {
+  if (!handoff || handoff.id !== Number(id) || handoff.status !== 'waiting') return false;
+  handoff.status = status;
+  pushState();
+  return true;
+}
 
 ipcMain.handle('about:info', () => {
   let build = '';
@@ -729,6 +762,12 @@ const routes = {
     selectTab(tab.id);
     return keychainFill(tab, b.account || null);
   },
+  'POST /handoff': (b) => {
+    const h = startHandoff({ reason: b.reason, kind: b.kind, agentName: b.agent, tabId: b.tabId });
+    return { id: h.id };
+  },
+  'GET /handoff': (_b, q) => ({ status: handoff && handoff.id === Number(q.id) ? handoff.status : 'cancelled' }),
+  'POST /handoff/cancel': (b) => ({ ok: answerHandoff(b.id, 'cancelled') }),
   'POST /activity': (b) => {
     const key = 'act.' + String(b.action || '');
     agent.label = i18n.strings[key] ? t(key) : String(b.action || '').slice(0, 40);

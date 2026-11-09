@@ -76,6 +76,20 @@ html, body { height: 100%; overflow: hidden; user-select: none; }
 #downloads .count { font: 500 11px/15px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--accent-text); }
 #downloads.is-active .count { color: var(--success); }
 
+/* Relais humain : l'agent attend une action de l'utilisateur dans la fenêtre. */
+#handoff {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3); background: var(--surface-raised); border-bottom: 1px solid var(--border);
+}
+#handoff[hidden] { display: none; }
+#handoff .hi { flex: none; display: inline-flex; padding: 6px; border-radius: 4px; background: var(--bubble-ai); color: var(--on-bubble); }
+#handoff .ht { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+#handoff .title { font: 700 13px/18px var(--font-sans); color: var(--text-strong); }
+#handoff .reason { color: var(--text); overflow-wrap: anywhere; }
+#handoff .sc-btn { flex: none; }
+#handoff .hbtn { height: var(--size-control-lg); padding: 0 calc(var(--space-4) + .025em) 0 calc(var(--space-4) - .025em); background: var(--action); color: var(--on-action); font-weight: 700; letter-spacing: .05em; }
+#handoff .hbtn:hover { background: var(--action-hover); }
+
 /* Marges autour de l'affichage iPhone (visibles de part et d'autre de la page). */
 #gutter {
   position: fixed; top: 92px; left: 0; padding: var(--space-6);

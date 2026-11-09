@@ -149,5 +149,14 @@
   "act.keychain": "acceso del Llavero",
   "act.dialog": "cuadro de diálogo",
   "act.console": "consola",
-  "act.tabs": "pestañas"
+  "act.tabs": "pestañas",
+  "handoff.title": "{agent} espera su acción",
+  "handoff.done": "HECHO",
+  "handoff.cancel": "Cancelar",
+  "handoff.notify": "{agent} espera su acción: {reason}",
+  "handoff.kind.signin": "Inicie sesión en la ventana de wCLAUDE y haga clic en HECHO.",
+  "handoff.kind.captcha": "El sitio pide una verificación humana. Hágala en la ventana de wCLAUDE y haga clic en HECHO.",
+  "handoff.kind.blocked": "El sitio bloquea el acceso. Desbloquéelo en la ventana de wCLAUDE si es posible y haga clic en HECHO.",
+  "handoff.kind.other": "Realice la acción pedida en la ventana de wCLAUDE y haga clic en HECHO.",
+  "act.handoff": "espera de su acción"
 }

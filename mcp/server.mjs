@@ -158,7 +158,31 @@ function locate(page, { ref, selector, text }) {
 async function pageLine(page, tab) {
   let title = '';
   try { title = await page.title(); } catch { /* navigating */ }
-  return `Tab #${tab.id}${tab.mobile ? ' (iPhone mode)' : ''}: ${title || '(no title)'} — ${page.url()}`;
+  let mobile = tab.mobile;
+  try { mobile = ((await api('GET', '/state')).tabs.find((x) => x.id === tab.id) || tab).mobile; } catch { /* état précédent */ }
+  return `Tab #${tab.id}${mobile ? ' (iPhone mode)' : ''}: ${title || '(no title)'} — ${page.url()}`;
+}
+
+/**
+ * Pages that need the user: sign-in, human checks (CAPTCHA), sites refusing access. wCLAUDE never tries to get past
+ * them; it tells the agent to hand over to the user with browser_request_user.
+ */
+async function blockerNote(page) {
+  const url = page.url();
+  if (/^https:\/\/accounts\.google\.com\/.*\/rejected/.test(url)) {
+    return '\nThe site refused this browser for sign-in. Do not retry: tell the user, and prefer an official API if one exists.';
+  }
+  const info = await page.evaluate(() => {
+    const frames = [...document.querySelectorAll('iframe')].map((f) => f.src || '').join(' ');
+    const text = (document.body ? document.body.innerText : '').slice(0, 6000).toLowerCase();
+    const check = /recaptcha|hcaptcha|challenges\.cloudflare\.com|turnstile|arkoselabs|funcaptcha|captcha-delivery/.test(frames)
+      || /captcha|verify you are human|vérifiez que vous êtes humain|unusual traffic|trafic inhabituel|are you a robot|êtes-vous un robot/.test(text);
+    const password = [...document.querySelectorAll('input[type=password]')].some((i) => i.offsetParent !== null);
+    return { check, password };
+  }).catch(() => ({}));
+  if (info.check) return '\nThis page asks for a human check (CAPTCHA). Never try to solve it: call browser_request_user with kind "captcha".';
+  if (info.password) return '\nThis page asks for a sign-in. Use browser_keychain_fill if a sign-in is saved; otherwise call browser_request_user with kind "signin".';
+  return '';
 }
 
 function dialogNote(page) {
@@ -238,7 +262,8 @@ const server = new McpServer(
       'Uploads: browser_upload_files sends local files of any size. Downloads are saved in the folder reported by browser_downloads.',
       'Mobile-only features (e.g. Instagram profile links): browser_mobile_mode switches a site to the iPhone version (user agent, screen and touch).',
       'Sign-in: never ask for or type passwords. Use browser_keychain_fill; the user approves in a macOS dialog and the password is never shared with you. Typing into password or payment-card fields is blocked.',
-      'Ask the user before publishing, posting, sending a message, buying, accepting terms or deleting anything. Never try to solve CAPTCHAs: ask the user to do it in the wCLAUDE window.',
+      'When a page needs the user (sign-in without a saved Keychain entry, CAPTCHA, two-factor code, "unusual activity" block), call browser_request_user: wCLAUDE asks the user to act in its window and returns when they are done. Never try to get past those checks yourself.',
+      'Ask the user before publishing, posting, sending a message, buying, accepting terms or deleting anything.',
     ].join('\n'),
   },
 );
@@ -303,7 +328,7 @@ tool('browser_navigate', 'Open an address in a tab, or go "back", "forward" or "
     await page.goto(target, opts);
   }
   await sleep(500);
-  return (await pageLine(page, t)) + dialogNote(page);
+  return (await pageLine(page, t)) + dialogNote(page) + (await blockerNote(page));
 });
 
 tool('browser_snapshot', 'Accessibility snapshot of the page with element refs to use in other tools. Call it before acting and after the page changes.', {
@@ -314,7 +339,7 @@ tool('browser_snapshot', 'Accessibility snapshot of the page with element refs t
   const { tab: t, page } = await resolve(tab, 'read');
   const snap = ref ? await page.locator(`aria-ref=${ref}`).ariaSnapshot({ mode: 'ai' }) : await page.ariaSnapshot({ mode: 'ai' });
   const cut = snap.length > max_chars;
-  return `${await pageLine(page, t)}${dialogNote(page)}\n\n${cut ? snap.slice(0, max_chars) + `\n… (truncated at ${max_chars} of ${snap.length} characters: pass ref= to read one part, or raise max_chars)` : snap}`;
+  return `${await pageLine(page, t)}${dialogNote(page)}${await blockerNote(page)}\n\n${cut ? snap.slice(0, max_chars) + `\n… (truncated at ${max_chars} of ${snap.length} characters: pass ref= to read one part, or raise max_chars)` : snap}`;
 }, { readOnlyHint: true });
 
 tool('browser_page_text', 'Visible text of the page (or of one element), without refs. Handy for reading articles, tables and results.', {
@@ -360,7 +385,7 @@ tool('browser_click', 'Click an element (by ref, selector or text) or a point (x
     await page.mouse.click(x, y, { button, clickCount: double ? 2 : 1 });
   } else throw new Error('Give a ref, a selector, a text or x and y.');
   await settle(page);
-  return `Clicked.\n${await pageLine(page, t)}${dialogNote(page)}`;
+  return `Clicked.\n${await pageLine(page, t)}${dialogNote(page)}${await blockerNote(page)}`;
 });
 
 tool('browser_tap', 'Touch tap on an element or point — for sites in iPhone mode that need real touch events.', {
@@ -600,6 +625,29 @@ tool('browser_keychain_fill', 'Fill the sign-in form of the page from the user\'
     error: 'The Keychain could not be read.',
   }[r.status] || `Status: ${r.status}`;
   return msg;
+});
+
+tool('browser_request_user', 'Hand over to the user and wait: wCLAUDE shows a bar asking them to act in its window (sign in, pass a CAPTCHA, enter a two-factor code, unblock the site…) and returns when they click DONE or Cancel. Write the reason in the user\'s language.', {
+  reason: z.string().describe('What the user should do, in their language, e.g. "Connecte-toi à Nexus Mods puis clique sur C\'EST FAIT".'),
+  kind: z.enum(['signin', 'captcha', 'blocked', 'other']).default('other'),
+  tab: tabArg,
+  wait_minutes: z.number().min(1).max(60).default(15),
+}, async ({ reason, kind, tab, wait_minutes }) => {
+  const { tab: t, page } = await resolve(tab, 'handoff');
+  const { id } = await api('POST', '/handoff', { reason, kind, tabId: t.id, agent: agentName });
+  const end = Date.now() + wait_minutes * 60000;
+  let status = 'waiting';
+  while (status === 'waiting' && Date.now() < end) {
+    await sleep(1000);
+    status = (await api('GET', `/handoff?id=${id}`)).status;
+  }
+  if (status === 'waiting') {
+    await api('POST', '/handoff/cancel', { id }).catch(() => {});
+    return `The user did not answer within ${wait_minutes} minutes. Ask them in the chat before trying again.`;
+  }
+  if (status === 'cancelled') return 'The user cancelled. Do not retry this step unless they ask.';
+  await settle(page);
+  return `The user is done.\n${await pageLine(page, t)}${await blockerNote(page)}`;
 });
 
 tool('browser_handle_dialog', 'Accept or dismiss the JavaScript dialog (alert, confirm, prompt, leave-page) open in a tab.', {
