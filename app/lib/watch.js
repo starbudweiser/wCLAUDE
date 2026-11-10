@@ -271,7 +271,7 @@ function apply(src, r) {
   }
 
   if (!first) {
-    const added = core.addedLines(st.text || '', r.text);
+    const added = core.addedLines(st.text || '', r.text, { keepNoise: !!src.selector }); // zone choisie : tout compte
     if (added.length && core.matchesKeywords(added, src.keywords)) {
       addItem(src, { kind: 'changed', title: added[0], lines: added.slice(0, 12), count: added.length });
     }

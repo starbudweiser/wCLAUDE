@@ -92,6 +92,9 @@ test('veille : numéros de version', () => {
   assert.equal(core.highestVersion('Latest: v1.4.3. Older v1.4.2, v1.3.9'), 'v1.4.3');
   assert.equal(core.highestVersion('Le 10.11.2026, prix 10.50 €'), null);
   assert.equal(core.highestVersion('CrossOver 26.1.0 et 27.0.1'), '27.0.1');
+  assert.equal(core.highestVersion(' 6.9 '), '6.9');
+  assert.equal(core.highestVersion('1.0.27'), '1.0.27');
+  assert.deepEqual(core.addedLines('1.0.27', '1.0.28', { keepNoise: true }), ['1.0.28']);
   assert.ok(core.versionGreater('v1.4.3', 'v1.4.2'));
   assert.ok(core.versionGreater('2.0', '2.0 rc1'));
   assert.ok(!core.versionGreater('2.0 beta 3', '2.0'));

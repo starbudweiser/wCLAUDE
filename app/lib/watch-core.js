@@ -28,14 +28,14 @@ const NOISE = [
 const isNoise = (line) => line.length < 3 || !/\p{L}/u.test(line) || NOISE.some((r) => r.test(line));
 
 /** Lignes présentes dans le nouveau texte et absentes (ou moins nombreuses) dans l'ancien, dans l'ordre. */
-function addedLines(oldText, newText) {
+function addedLines(oldText, newText, { keepNoise = false } = {}) {
   const count = new Map();
   for (const l of String(oldText || '').split('\n')) count.set(l, (count.get(l) || 0) + 1);
   const added = [];
   for (const l of String(newText || '').split('\n')) {
     const n = count.get(l) || 0;
     if (n > 0) count.set(l, n - 1);
-    else if (!isNoise(l)) added.push(l);
+    else if (l && (keepNoise || !isNoise(l))) added.push(l);
   }
   return added;
 }
@@ -72,6 +72,9 @@ function compareVersions(a, b) {
 
 /** Plus haut numéro de version du texte (« v1.4.3 », « 27.0.1 », « 2.0 beta 3 ») ; les dates sont ignorées. */
 function highestVersion(text) {
+  // Zone qui ne contient qu'un numéro (« 6.9 » d'une page Nexus lue par sélecteur) : c'est la version.
+  const bare = String(text || '').trim().match(/^v?\d{1,4}(\.\d{1,5}){1,3}([-.]?[a-z]+\.?\d*)?$/i);
+  if (bare) return bare[0];
   let best = null;
   for (const m of String(text || '').matchAll(VERSION_RE)) {
     const v = parseVersion(m);
