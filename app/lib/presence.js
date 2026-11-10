@@ -8,6 +8,7 @@ const path = require('path');
 const MODES = ['dock', 'menubar', 'both'];
 let tray = null;
 let hooks = null; // { getWindow, showWindow, buildMenu, tooltip }
+let badge = false; // pastille bleue : nouveautés de la veille non lues
 
 function normalize(mode) {
   return MODES.includes(mode) ? mode : 'menubar';
@@ -26,10 +27,7 @@ function apply(mode) {
 
 function installTray() {
   if (tray && !tray.isDestroyed()) return;
-  // silhouette en couleur (fenêtre claire + « w » argile), sans carré de fond : pas une image « modèle »
-  const img = nativeImage.createFromPath(path.join(__dirname, '..', 'ui', 'tray.png'));
-  img.setTemplateImage(false);
-  tray = new Tray(img);
+  tray = new Tray(trayImage());
   tray.setToolTip(hooks.tooltip());
   tray.setIgnoreDoubleClickEvents(true);
   tray.on('click', (e) => (e.ctrlKey ? popMenu() : toggle()));
@@ -54,6 +52,19 @@ function toggle() {
   else hooks.showWindow();
 }
 
+/** Disque argile et « w » foncé, en couleur (pas une image « modèle ») ; tray-new : avec la pastille bleue. */
+function trayImage() {
+  const img = nativeImage.createFromPath(path.join(__dirname, '..', 'ui', badge ? 'tray-new.png' : 'tray.png'));
+  img.setTemplateImage(false);
+  return img;
+}
+
+function setBadge(on) {
+  if (badge === !!on) return;
+  badge = !!on;
+  if (tray && !tray.isDestroyed()) tray.setImage(trayImage());
+}
+
 function refreshTooltip() {
   if (tray && !tray.isDestroyed()) tray.setToolTip(hooks.tooltip());
 }
@@ -62,4 +73,4 @@ function init(h) {
   hooks = h;
 }
 
-module.exports = { MODES, init, apply, normalize, toggle, refreshTooltip };
+module.exports = { MODES, init, apply, normalize, toggle, refreshTooltip, setBadge };

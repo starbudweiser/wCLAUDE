@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="190 190 644 644">
-  <!-- Silhouette de la barre de menus : le logo sans son carré de fond, traits épaissis pour 18 pt -->
-  <rect x="222" y="262" width="580" height="500" rx="56" fill="none" stroke="#dddddd" stroke-width="56"/>
-  <path d="M237 384 H787" stroke="#dddddd" stroke-width="48"/>
-  <path d="M340 494 L420 676 L512 540 L604 676 L684 494" fill="none" stroke="#d97757" stroke-width="80" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+  <!-- Icône de la barre de menus : disque argile, « w » foncé (tracé du logo) ; pastille bleue = nouveautés de la veille -->
+  <circle cx="18" cy="18" r="16" fill="#d97757"/>
+  <path d="M9.2 13.6 L13.3 23.4 L18 16.4 L22.7 23.4 L26.8 13.6" fill="none" stroke="#1a1a1a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <g id="badge"><circle cx="30" cy="6" r="4.6" fill="#38bdf8" stroke="#1a1a1a" stroke-width="3"/></g>
 </svg>
