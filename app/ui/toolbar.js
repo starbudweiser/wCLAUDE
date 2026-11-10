@@ -42,6 +42,8 @@ $('reload').onclick = () => send('nav', { action: active()?.loading ? 'stop' : '
 $('mobile').onclick = () => send('mobile:toggle');
 $('keychain').onclick = () => send('keychain:fill');
 $('downloads').onclick = () => send('downloads:menu');
+$('watch').onclick = () => send('watch:open');
+$('watch').title = t('watch.tooltip');
 
 const address = $('address');
 address.addEventListener('focus', () => { editing = true; setTimeout(() => address.select(), 0); });
@@ -66,6 +68,7 @@ function active() {
 }
 
 function tabTitle(tab) {
+  if (tab.internal === 'watch') return t('watch.title');
   if (tab.title && tab.title !== tab.url) return tab.title;
   if (!tab.url) return t('tab.new');
   try { return new URL(tab.url).hostname || tab.url; } catch { return tab.url; }
@@ -76,7 +79,7 @@ function renderTabs() {
   const agentTab = state.agent && Date.now() - state.agent.at < 5000 ? state.agent.tabId : null;
   box.innerHTML = state.tabs.map((tab) => `
     <div class="tab${tab.active ? ' is-active' : ''}${tab.id === agentTab ? ' is-agent' : ''}" role="tab" aria-selected="${tab.active}" data-id="${tab.id}" title="${esc(tabTitle(tab))}">
-      <span class="fav">${tab.id === agentTab ? icon('sparkles') : tab.favicon ? `<img src="${esc(tab.favicon)}" alt="">` : icon('globe')}</span>
+      <span class="fav">${tab.id === agentTab ? icon('sparkles') : tab.internal === 'watch' ? icon('eye') : tab.favicon ? `<img src="${esc(tab.favicon)}" alt="">` : icon('globe')}</span>
       <span class="title">${esc(tab.loading && !tab.title ? t('tab.loading') : tabTitle(tab))}</span>
       <button class="close" type="button" data-close="${tab.id}" aria-label="${esc(t('tab.close'))}" title="${esc(t('tab.close'))}">${icon('x')}</button>
     </div>`).join('');
@@ -138,6 +141,9 @@ function render() {
   const dl = $('downloads');
   dl.classList.toggle('is-active', state.downloads.active > 0);
   dl.innerHTML = `${icon('download')}<span>${esc(t('downloads.button'))}</span>${state.downloads.count ? `<span class="count">${state.downloads.active || state.downloads.count}</span>` : ''}`;
+  const wn = state.watch ? state.watch.unread : 0;
+  $('watch').innerHTML = `${icon('eye')}<span>${esc(t('watch.button'))}</span>${wn ? `<span class="count">${wn}</span>` : ''}`;
+  $('watch').classList.toggle('is-current', !!(tab && tab.internal === 'watch'));
   const ho = $('handoff');
   const h = state.handoff;
   if (h) {

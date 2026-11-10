@@ -11,6 +11,11 @@ $('copyConfig').innerHTML = `${icon('copy')}<span>${esc(t('settings.copyConfig')
 $('iconTitle').textContent = t('settings.icon');
 $('iconHint').textContent = t('settings.iconHint');
 $('autoStart').querySelector('.sc-option__label').textContent = t('settings.autoStart');
+$('watchTitle').textContent = t('settings.watch');
+$('watchHint').textContent = t('settings.watchHint');
+$('watchNotify').querySelector('.sc-option__label').textContent = t('settings.watchNotify');
+$('watchOpen').innerHTML = `${icon('eye')}<span>${esc(t('settings.watchOpen'))}</span>`;
+$('watchOpen').onclick = () => invoke('settings:openWatch');
 $('mobileTitle').textContent = t('settings.mobile');
 $('mobileHint').textContent = t('settings.mobileHint');
 $('dlTitle').textContent = t('settings.downloads');
@@ -68,6 +73,8 @@ async function load() {
   $('autoStart').classList.toggle('is-disabled', !s.autoStartAvailable);
   $('autoStart').setAttribute('aria-disabled', String(!s.autoStartAvailable));
   $('autoStartHint').textContent = t(s.autoStartAvailable ? 'settings.autoStartHint' : 'settings.autoStartDev');
+  checkbox($('watchNotify'), s.watchNotify, (v) => invoke('settings:set', { key: 'watchNotify', value: v }));
+  $('watchFile').textContent = s.watchFile;
   checkbox($('updAuto'), s.autoInstall, (v) => invoke('settings:set', { key: 'autoInstall', value: v }));
   $('agentState').textContent = s.agentActive ? t('settings.agentState', { port: s.cdpPort }) : t('settings.agentOff');
   $('agentLast').textContent = s.lastAgent ? t('settings.agentConnected', { agent: s.lastAgent }) : '';

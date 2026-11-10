@@ -33,10 +33,20 @@ const routes = {
     <script>document.getElementById('id').textContent = JSON.stringify({ ua: navigator.userAgent, platform: navigator.platform,
       width: innerWidth, dpr: devicePixelRatio, touch: navigator.maxTouchPoints, mobile: matchMedia('(pointer: coarse)').matches });</script>`),
   '/login': () => page('Sign in', `<h1>Sign in</h1><form><input name="user" autocomplete="username" placeholder="Email"><input name="pw" type="password" placeholder="Password"><button>Sign in</button></form>`),
+  // Veille : /watch/bump fait évoluer la page, le flux et la version ; /watch/wall imite un défi anti-robot.
+  '/watch/page': () => page('Blog', `<header>Menu</header><main><article>${watchPosts().map((p) => `<h2>${p}</h2>`).join('')}</article><p>Updated ${new Date().toISOString()}</p></main><script>document.querySelector('header').textContent += ' (js)';</script>`),
+  '/watch/version': () => page('Downloads', `<main><p>Latest release: v1.4.${2 + watchStep}</p><p>Older: v1.4.1, v1.3.9</p></main>`),
+  '/watch/wall': () => page('Just a moment...', '<p>Checking your browser before accessing the site.</p>'),
+  '/watch/withfeed': () => `<!doctype html><html><head><title>Feed blog</title><link rel="alternate" type="application/rss+xml" href="/watch/feed.xml"></head><body><p>Blog</p></body></html>`,
 };
+let watchStep = 0;
+const watchPosts = () => ['CrossOver 26 is out', ...(watchStep ? ['CrossOver 27 Preview 1 is available', 'ARM64 build for macOS, no Rosetta 2'] : [])];
+const watchFeed = () => `<?xml version="1.0"?><rss><channel><title>Feed</title>${watchPosts().map((p, i) => `<item><title>${p}</title><link>http://127.0.0.1:${PORT}/post/${i}</link><guid>post-${i}</guid><description>About ${p}</description></item>`).reverse().join('')}</channel></rss>`;
 
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
+  if (url.pathname === '/watch/bump') { watchStep++; res.end(String(watchStep)); return; }
+  if (url.pathname === '/watch/feed.xml') { res.writeHead(200, { 'Content-Type': 'application/rss+xml' }); res.end(watchFeed()); return; }
   if (req.method === 'POST' && url.pathname === '/upload') {
     let bytes = 0;
     const names = [];

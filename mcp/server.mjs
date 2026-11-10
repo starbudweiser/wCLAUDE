@@ -273,6 +273,7 @@ const server = new McpServer(
       'Mobile-only features (e.g. Instagram profile links): browser_mobile_mode switches a site to the iPhone version (user agent, screen and touch).',
       'Sign-in: never ask for or type passwords. Use browser_keychain_fill; the user approves in a macOS dialog and the password is never shared with you. Typing into password or payment-card fields is blocked.',
       'When a page needs the user (sign-in without a saved Keychain entry, CAPTCHA, two-factor code, "unusual activity" block), call browser_request_user: wCLAUDE asks the user to act in its window and returns when they are done. Never try to get past those checks yourself.',
+      'Watch: wCLAUDE checks the user\'s watched pages, feeds and GitHub releases while you are away. Call watch_digest when you start a task that may relate to them (or when the user asks what is new), then watch_read the items you have handled.',
       'YouTube: prefer the youtube_* tools (official API) over driving YouTube Studio pages; they upload videos of any size and read statistics reliably.',
       'Ask the user before publishing, posting, sending a message, buying, accepting terms or deleting anything.',
     ].join('\n'),
@@ -821,6 +822,117 @@ tool('youtube_analytics', 'Channel or video statistics from YouTube Analytics fo
   const rows = (r.rows || []).map((row) => row.join('\t'));
   return [head.join('\t'), ...rows].join('\n') || 'No data for this period.';
 }, { readOnlyHint: true });
+
+// ---------------------------------------------------------------- Watch (deterministic page / feed / release monitoring)
+// wCLAUDE checks the sources while no agent is around; agents read the digest when they come back. No AI in the app.
+async function wapi(method, route, body) {
+  await ensureApp();
+  await activity('watch');
+  return api(method, route, body);
+}
+const fmtAt = (ms) => (ms ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ms)).replace(',', '') : 'never');
+const fmtHour = (ms) => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(ms));
+const KIND_NAME = { page: 'page', feed: 'RSS/Atom feed', github: 'GitHub releases', version: 'version number on a page' };
+const REASON = { challenge: 'anti-bot check or CAPTCHA', signin: 'sign-in wall' };
+
+function itemLine(it, src, { lines = true } = {}) {
+  const what = it.kind === 'version' ? `version ${it.from ? `${it.from} → ` : ''}${it.to}`
+    : it.kind === 'entry' ? `new entry: ${it.title}`
+    : `page changed (${it.count || it.lines.length} line${(it.count || it.lines.length) === 1 ? '' : 's'})`;
+  const out = [`[${it.id}] ${src ? src.name : '?'} · ${what} · ${fmtAt(it.at)}${it.read ? ' · read' : ''}`];
+  out.push(`     ${it.url || (src && src.url) || ''}`);
+  if (lines) {
+    if (it.kind === 'version' && it.title && it.title !== it.to) out.push(`     ${it.title}`);
+    for (const l of (it.lines || []).slice(0, 12)) out.push(`     + ${l}`);
+    if ((it.count || 0) > (it.lines || []).length) out.push(`     … ${it.count - it.lines.length} more added lines`);
+  }
+  return out.join('\n');
+}
+
+tool('watch_digest', 'What changed in the user\'s watched sources (pages, RSS feeds, GitHub releases) since they were last marked read: unread items grouped by group, with the group brief, each source\'s note for you (what matters), the link and the added lines; then sources that need the user or failed. Read it when you start working, then mark items read with watch_read.', {
+  include_read: z.boolean().optional().describe('Also list the 10 most recent read items.'),
+}, async ({ include_read }) => {
+  const d = await wapi('GET', '/watch/digest');
+  const srcById = new Map(d.sources.map((s) => [s.id, s]));
+  const unread = d.items.filter((i) => !i.read).reverse();
+  const head = `watch_digest · ${unread.length} unread · ${d.sources.length} source${d.sources.length === 1 ? '' : 's'} · last pass ${fmtAt(d.lastPass)}${d.running ? ' · checking now' : ''}`;
+  if (!d.sources.length) return `${head}\n\nNo sources yet. Add one with watch_add (url, name, group, note).`;
+  const out = [head];
+  const groups = new Map();
+  for (const it of unread) {
+    const src = srcById.get(it.sourceId);
+    const g = (src && src.group) || '';
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(it);
+  }
+  for (const [g, items] of groups) {
+    const brief = (d.groups.find((x) => x.name === g) || {}).brief;
+    out.push('', `## ${g || 'No group'}${brief ? `  (brief: ${brief})` : ''}`);
+    const notes = new Set();
+    for (const it of items) {
+      const src = srcById.get(it.sourceId);
+      out.push(itemLine(it, src));
+      if (src && src.note && !notes.has(src.id)) { out.push(`     note: ${src.note}`); notes.add(src.id); }
+    }
+  }
+  if (!unread.length) out.push('', 'No unread items.');
+  const needs = d.sources.filter((s) => s.status === 'needs_user' || (s.reason && s.status !== 'error'));
+  const failed = d.sources.filter((s) => s.status === 'error');
+  if (needs.length) out.push('', `Needs the user: ${needs.map((s) => `${s.name} (${REASON[s.reason] || 'needs the user'})`).join(', ')} → open the page in a tab and call browser_request_user, then watch_check.`);
+  if (failed.length) out.push('', `Failed: ${failed.map((s) => `${s.name} (${s.error}${s.nextCheck ? `, retry ${fmtHour(s.nextCheck)}` : ''})`).join(', ')}`);
+  if (include_read) {
+    const read = d.items.filter((i) => i.read).slice(0, 10);
+    if (read.length) out.push('', '## Recently read', ...read.map((it) => itemLine(it, srcById.get(it.sourceId), { lines: false })));
+  }
+  if (unread.length) out.push('', `After reading: watch_read {"ids":[${unread.map((i) => i.id).join(',')}]}`);
+  return out.join('\n');
+}, { readOnlyHint: true });
+
+tool('watch_list', 'The watched sources: id, name, group, type, how often they are checked, state (ok, new, needs_user, error, paused, pending), last check, unread count and note.', {}, async () => {
+  const d = await wapi('GET', '/watch/digest');
+  if (!d.sources.length) return 'No sources yet. Add one with watch_add.';
+  const lines = d.sources.map((s) => `${s.id} · ${s.name}${s.group ? ` [${s.group}]` : ''} · ${KIND_NAME[s.kind] || s.kind} · every ${s.everyHours} h · ${s.status}${s.status === 'error' ? ` (${s.error})` : ''}${s.status === 'needs_user' ? ` (${REASON[s.reason] || ''})` : ''} · last check ${fmtAt(s.lastCheck)} · ${s.unread} unread${s.version ? ` · version ${s.version}` : ''}\n   ${s.url}${s.selector ? `\n   area: ${s.selector}` : ''}${s.keywords.length ? `\n   keywords: ${s.keywords.join(', ')}` : ''}${s.note ? `\n   note: ${s.note}` : ''}`);
+  const briefs = d.groups.filter((g) => g.brief).map((g) => `${g.name}: ${g.brief}`);
+  return `${lines.join('\n')}${briefs.length ? `\n\nGroup briefs:\n${briefs.join('\n')}` : ''}\nData file: ${d.file}`;
+}, { readOnlyHint: true });
+
+tool('watch_add', 'Add a source to watch, or update the one with the same address. The type is detected (GitHub releases, RSS/Atom feed announced by the page, otherwise the page text); the first reading is the reference and raises no alert. Pages are read in a hidden wCLAUDE view with the user\'s sessions; sign-in walls and anti-bot checks are never bypassed. Write the note in the user\'s language.', {
+  url: z.string().describe('Address of the page, feed or GitHub repository.'),
+  name: z.string().optional().describe('Short name shown in lists.'),
+  group: z.string().optional().describe('Group name, e.g. "Rendering".'),
+  group_brief: z.string().optional().describe('Brief shared by the whole group (what matters for these sources).'),
+  every_hours: z.union([z.literal(1), z.literal(6), z.literal(24), z.literal(168)]).optional().describe('Check every 1, 6, 24 or 168 hours (default 24).'),
+  selector: z.string().optional().describe('CSS selector of the page area to watch (e.g. "main article"), to avoid noise.'),
+  keywords: z.array(z.string()).optional().describe('Only alert when one of these words appears in what was added.'),
+  note: z.string().optional().describe('Note for the agent reading the digest: what matters, what to ignore.'),
+  kind: z.enum(['page', 'version']).optional().describe('Force "page" (text changes) or "version" (highest version number on the page) instead of auto-detection.'),
+}, async (a) => {
+  const s = await wapi('POST', '/watch/add', { url: a.url, name: a.name, group: a.group, groupBrief: a.group_brief, everyHours: a.every_hours, selector: a.selector, keywords: a.keywords, note: a.note, kind: a.kind });
+  return `Watching "${s.name}" (${s.id}) as ${KIND_NAME[s.kind] || s.kind}, every ${s.everyHours} h${s.group ? `, group ${s.group}` : ''}. The first reading is the reference (no alert). Check it now with watch_check {"id":"${s.id}"}.`;
+});
+
+tool('watch_check', 'Check one source (id) or all enabled sources now and wait for the result (a page takes a few seconds). New items appear in watch_digest.', {
+  id: z.string().optional().describe('Source id from watch_list; omit to check all sources.'),
+}, async ({ id }) => {
+  const list = await wapi('POST', '/watch/check', { id, wait: true });
+  return list.map((s) => `${s.name}: ${s.status}${s.status === 'error' ? ` (${s.error})` : ''}${s.status === 'needs_user' ? ` (${REASON[s.reason] || 'needs the user'} → browser_request_user)` : ''}${s.unread ? ` · ${s.unread} unread` : ''}${s.version ? ` · version ${s.version}` : ''}`).join('\n') + '\nRead the news with watch_digest.';
+});
+
+tool('watch_history', 'Recent items of one source, read or not, newest first.', {
+  id: z.string().describe('Source id from watch_list.'),
+  limit: z.number().int().min(1).max(50).optional(),
+}, async ({ id, limit }) => {
+  const h = await wapi('GET', `/watch/history?${new URLSearchParams({ id, limit: String(limit || 20) })}`);
+  if (!h.items.length) return `${h.source.name}: no items yet (state ${h.source.status}, last check ${fmtAt(h.source.lastCheck)}).`;
+  return `${h.source.name} · ${h.source.url}\n${h.items.map((it) => itemLine(it, h.source)).join('\n')}`;
+}, { readOnlyHint: true });
+
+tool('watch_read', 'Mark watch items as read (ids from watch_digest), or "all".', {
+  ids: z.union([z.array(z.number().int()), z.literal('all')]),
+}, async ({ ids }) => {
+  const r = await wapi('POST', '/watch/read', { ids });
+  return `${r.marked} item${r.marked === 1 ? '' : 's'} marked read.`;
+});
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

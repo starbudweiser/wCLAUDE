@@ -76,3 +76,38 @@ test('service de session : agent de lancement valide, caché, relancé seulement
   fs.writeFileSync(f, xml);
   execFileSync('/usr/bin/plutil', ['-lint', f]);
 });
+
+test('veille : texte, lignes ajoutées, bruit, mots-clés', () => {
+  const core = require('../app/lib/watch-core.js');
+  assert.equal(core.normalize('  a   b \n\n a   b\n\tc d '), 'a b\nc d');
+  assert.deepEqual(core.addedLines('Menu\nCrossOver 26 is out\nUpdated 5 min ago', 'Menu\nCrossOver 27 is out\nCrossOver 26 is out\n6 min ago\n2026-11-10'), ['CrossOver 27 is out']);
+  assert.ok(core.matchesKeywords(['Build ARM64 pour macOS'], ['arm64']));
+  assert.ok(!core.matchesKeywords(['Nouveau thème'], ['DXMT', 'arm64']));
+  assert.ok(core.matchesKeywords(['Élévation'], ['elevation']));
+  assert.deepEqual(core.parseKeywords('DXMT, ARM64;  ,Wine'), ['DXMT', 'ARM64', 'Wine']);
+});
+
+test('veille : numéros de version', () => {
+  const core = require('../app/lib/watch-core.js');
+  assert.equal(core.highestVersion('Latest: v1.4.3. Older v1.4.2, v1.3.9'), 'v1.4.3');
+  assert.equal(core.highestVersion('Le 10.11.2026, prix 10.50 €'), null);
+  assert.equal(core.highestVersion('CrossOver 26.1.0 et 27.0.1'), '27.0.1');
+  assert.ok(core.versionGreater('v1.4.3', 'v1.4.2'));
+  assert.ok(core.versionGreater('2.0', '2.0 rc1'));
+  assert.ok(!core.versionGreater('2.0 beta 3', '2.0'));
+});
+
+test('veille : flux RSS et Atom, lien de flux, GitHub, barrières', () => {
+  const core = require('../app/lib/watch-core.js');
+  const rss = '<?xml version="1.0"?><rss><channel><item><title>A &amp; B</title><link>https://x/a</link><guid>1</guid><description><![CDATA[<p>Hi <b>there</b></p>]]></description></item></channel></rss>';
+  assert.ok(core.looksLikeFeed(rss));
+  assert.deepEqual(core.parseFeed(rss).map((e) => [e.id, e.title, e.url, e.summary]), [['1', 'A & B', 'https://x/a', 'Hi there']]);
+  const atom = '<feed xmlns="http://www.w3.org/2005/Atom"><entry><id>t1</id><title>T</title><link rel="alternate" href="https://y/1"/></entry></feed>';
+  assert.equal(core.parseFeed(atom)[0].url, 'https://y/1');
+  assert.equal(core.feedLink('<link rel="alternate" type="application/rss+xml" href="/feed/">', 'https://blog.example/a/'), 'https://blog.example/feed/');
+  assert.deepEqual(core.githubRepo('https://github.com/doodlum/skyrim-community-shaders/releases'), { owner: 'doodlum', repo: 'skyrim-community-shaders' });
+  assert.equal(core.githubRepo('https://example.com/a/b'), null);
+  assert.equal(core.needsUser({ title: 'Just a moment...' }), 'challenge');
+  assert.equal(core.needsUser({ text: 'Sign in', hasPassword: true }), 'signin');
+  assert.equal(core.needsUser({ text: 'A long normal article' }), null);
+});

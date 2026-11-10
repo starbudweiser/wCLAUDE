@@ -1,0 +1,54 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title></title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="watch.css">
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <button id="addBtn" class="sc-btn sc-btn--secondary" type="button"></button>
+    <nav id="sources"></nav>
+    <div id="lastPass"></div>
+  </aside>
+  <main id="main">
+    <div id="head">
+      <h1 id="headTitle"></h1>
+      <div id="headActions"></div>
+    </div>
+    <div id="sourceInfo" hidden></div>
+    <div id="list"></div>
+  </main>
+</div>
+
+<div id="scrim" hidden>
+  <form id="dlg" autocomplete="off" novalidate>
+    <h2 id="dlgTitle"></h2>
+    <div class="body">
+      <label class="fl"><span id="lUrl"></span><input class="inp" id="fUrl" type="url" spellcheck="false" required></label>
+      <div class="g2">
+        <label class="fl"><span id="lName"></span><input class="inp" id="fName" type="text"></label>
+        <label class="fl"><span id="lGroup"></span><input class="inp" id="fGroup" type="text" list="groupList"><datalist id="groupList"></datalist></label>
+      </div>
+      <div class="fl"><span id="lEvery"></span><div class="seg" id="fEvery" role="radiogroup"></div></div>
+      <div class="g2">
+        <label class="fl"><span><span id="lZone"></span> <i id="lZoneOpt"></i></span><input class="inp" id="fSelector" type="text" spellcheck="false"></label>
+        <label class="fl"><span><span id="lKeywords"></span> <i id="lKeywordsOpt"></i></span><input class="inp" id="fKeywords" type="text"></label>
+      </div>
+      <label class="fl"><span id="lNote"></span><textarea class="inp ta" id="fNote" rows="3"></textarea></label>
+      <div id="result" hidden></div>
+      <p id="hint"></p>
+    </div>
+    <div class="foot">
+      <button id="bCancel" class="sc-btn sc-btn--secondary caps" type="button"></button>
+      <button id="bTest" class="sc-btn sc-btn--secondary caps" type="button"></button>
+      <button id="bAdd" class="sc-btn sc-btn--primary caps" type="submit"></button>
+    </div>
+  </form>
+</div>
+<script type="module" src="watch.js"></script>
+</body>
+</html>

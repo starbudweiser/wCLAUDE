@@ -19,6 +19,7 @@ const DEFAULTS = {
   lastTabs: [],
   windowSize: null,
   iconMode: 'menubar', // dock | menubar | both
+  watchNotify: true,
 };
 
 let cache = null;

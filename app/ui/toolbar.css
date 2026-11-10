@@ -73,7 +73,7 @@ html, body { height: 100%; overflow: hidden; user-select: none; }
 }
 #address::placeholder { color: var(--text-subtle); }
 #navbar .sc-btn { flex: none; }
-#downloads .count { font: 500 11px/15px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--accent-text); }
+#downloads .count, #watch .count { font: 500 11px/15px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--accent-text); }
 #downloads.is-active .count { color: var(--success); }
 
 /* Relais humain : l'agent attend une action de l'utilisateur dans la fenêtre. */
@@ -97,3 +97,4 @@ html, body { height: 100%; overflow: hidden; user-select: none; }
 }
 #gutter .label { font: 700 15px/22px var(--font-sans); letter-spacing: .025em; color: var(--text-strong); }
 #gutter .site { color: var(--accent-text); font: 13px/18px var(--font-mono); }
+#watch.is-current { background: var(--surface-selected); color: var(--text-strong); }

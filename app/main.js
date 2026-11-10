@@ -12,6 +12,7 @@ const control = require('./lib/control');
 const youtube = require('./lib/youtube');
 const presence = require('./lib/presence');
 const autostart = require('./lib/autostart');
+const watch = require('./lib/watch');
 const pkg = require('../package.json');
 
 const UI = path.join(__dirname, 'ui');
@@ -19,6 +20,10 @@ const { pathToFileURL } = require('url');
 const NEWTAB_BASE = pathToFileURL(path.join(UI, 'newtab.html')).href;
 let NEWTAB = NEWTAB_BASE; // complété après le choix de la langue (textes passés dans l'adresse)
 const isNewTab = (url) => String(url || '').startsWith(NEWTAB_BASE);
+const WATCH_URL = pathToFileURL(path.join(UI, 'watch.html')).href;
+const WATCH_ADDRESS = 'wclaude://veille';
+const isWatch = (url) => String(url || '').split(/[?#]/)[0] === WATCH_URL;
+const isWatchAddress = (text) => /^wclaude:\/\/(veille|watch)\/?$/i.test(String(text || '').trim());
 const CHROME_UA = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`;
 const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 const IPHONE = { width: 390, height: 844, scale: 3 };
@@ -65,7 +70,7 @@ const t = (k, v) => i18n.t(k, v);
 const tabById = (id) => tabs.find((x) => x.id === Number(id));
 const tabByWc = (wc) => tabs.find((x) => x.wc === wc || x.wc.id === (wc && wc.id));
 const activeTab = () => tabById(activeId);
-const isBusy = () => Date.now() - agent.at < 120000 || downloads.some((d) => d.state === 'progressing') || (handoff && handoff.status === 'waiting') || youtube.uploading();
+const isBusy = () => watch.snapshot().running || Date.now() - agent.at < 120000 || downloads.some((d) => d.state === 'progressing') || (handoff && handoff.status === 'waiting') || youtube.uploading();
 
 // ---------- barre d'outils ----------
 function publicTab(tab) {
@@ -73,7 +78,8 @@ function publicTab(tab) {
   return {
     id: tab.id,
     targetId: tab.targetId,
-    url: isNewTab(url) ? '' : url,
+    url: isNewTab(url) ? '' : isWatch(url) ? WATCH_ADDRESS : url,
+    internal: isWatch(url) ? 'watch' : '',
     title: tab.title || '',
     favicon: tab.favicon || '',
     loading: tab.loading,
@@ -104,6 +110,7 @@ function pushState() {
       },
       agent: { label: agent.label, name: agent.name || t('agent.generic'), at: agent.at, tabId: agent.tabId },
       notice,
+      watch: { unread: watch.unreadCount() },
       handoff: handoff && handoff.status === 'waiting' ? { id: handoff.id, reason: handoff.reason, kind: handoff.kind, agent: handoff.agent || t('agent.generic') } : null,
     });
   });
@@ -217,11 +224,12 @@ async function attachDebugger(tab) {
   } catch { /* outils de développement déjà ouverts sur cet onglet */ }
 }
 
-function createTab(url, { activate = true, webContents = null } = {}) {
+function createTab(url, { activate = true, webContents = null, internal = '' } = {}) {
   ensureWindow();
-  const view = webContents
-    ? new WebContentsView({ webContents })
-    : new WebContentsView({ webPreferences: { sandbox: true, contextIsolation: true, backgroundThrottling: false, spellcheck: true } });
+  const prefs = { sandbox: true, contextIsolation: true, backgroundThrottling: false, spellcheck: true };
+  // Page interne Veille : préchargement dédié (canaux watch:*), qui ne s'active que sur cette page.
+  if (internal === 'watch') Object.assign(prefs, { preload: path.join(UI, 'watch-preload.js'), spellcheck: false });
+  const view = webContents ? new WebContentsView({ webContents }) : new WebContentsView({ webPreferences: prefs });
   const tab = { id: nextTabId++, view, wc: view.webContents, mobile: false, title: '', favicon: '', loading: false, targetId: null };
   tabs.push(tab);
   win.contentView.addChildView(view);
@@ -241,6 +249,10 @@ function createTab(url, { activate = true, webContents = null } = {}) {
   wc.on('enter-html-full-screen', () => { fullscreen = true; win.setFullScreen(true); layout(); pushState(); });
   wc.on('leave-html-full-screen', () => { fullscreen = false; win.setFullScreen(false); layout(); pushState(); });
   wc.on('context-menu', (_e, params) => contextMenu(tab, params));
+  if (internal === 'watch') {
+    // La page Veille ne quitte jamais sa page : un lien s'ouvre dans un nouvel onglet.
+    wc.on('will-navigate', (e, target) => { if (!isWatch(target)) { e.preventDefault(); if (/^https?:/.test(target)) createTab(target); } });
+  }
   wc.setWindowOpenHandler(({ url, disposition }) => {
     // Les fenêtres ouvertes par la page (connexion, partage…) deviennent des onglets et gardent leur lien avec elle.
     return {
@@ -387,6 +399,7 @@ function trayMenu() {
   const shown = win && !win.isDestroyed() && win.isVisible() && !win.isMinimized();
   const front = (fn) => () => { app.focus({ steal: true }); fn(); };
   return [
+    ...watchMenu(),
     shown
       ? { label: t('tray.hide'), click: () => win.hide() }
       : { label: t('tray.show'), click: () => showWindow() },
@@ -406,6 +419,77 @@ function trayMenu() {
     { label: t('menu.quit'), click: () => app.quit() },
   ];
 }
+
+// ---------- Veille ----------
+const hhmm = (ms) => (ms ? new Intl.DateTimeFormat(i18n.lang, { hour: '2-digit', minute: '2-digit' }).format(new Date(ms)) : '–');
+
+/** Ouvre l'onglet Veille (le sélectionne s'il existe), en affichant la fenêtre si demandé. */
+function openWatch({ show = false } = {}) {
+  if (show) showWindow();
+  else ensureWindow();
+  const tab = tabs.find((x) => !x.wc.isDestroyed() && isWatch(x.wc.getURL()));
+  if (tab) selectTab(tab.id);
+  else createTab(WATCH_URL, { internal: 'watch' });
+}
+
+function itemDetail(it) {
+  if (it.kind === 'version') return it.to || it.title;
+  if (it.kind === 'entry') return t('watch.item.entry');
+  return t('watch.item.changed');
+}
+
+function watchMenu() {
+  const items = watch.unreadItems();
+  const out = [];
+  if (items.length) {
+    out.push({ label: t(items.length <= 1 ? 'watch.menu.countOne' : 'watch.menu.count', { count: items.length }), enabled: false });
+    for (const it of items.slice(-6).reverse()) {
+      const s = watch.sourceById(it.sourceId);
+      out.push({ label: `${s ? s.name : '?'} · ${itemDetail(it)}`, click: () => openWatch({ show: true }) });
+    }
+    out.push({ type: 'separator' });
+  }
+  const snap = watch.snapshot();
+  out.push({ label: t('watch.menu.open'), click: () => openWatch({ show: true }) });
+  if (snap.sources.length) out.push({ label: t('watch.menu.check', { time: hhmm(snap.lastPass) }), enabled: !snap.running, click: () => watch.checkNow() });
+  out.push({ type: 'separator' });
+  return out;
+}
+
+/** Une notification groupée et silencieuse par passage ; clic = onglet Veille. */
+function notifyWatch(fresh) {
+  if (config.get('watchNotify') === false) return;
+  const names = [...new Set(fresh.map((it) => (watch.sourceById(it.sourceId) || {}).name).filter(Boolean))];
+  try {
+    const n = new Notification({ title: 'wCLAUDE', body: `${t(fresh.length === 1 ? 'watch.notifyOne' : 'watch.notify', { count: fresh.length })}\n${names.slice(0, 4).join(', ')}`, silent: true });
+    n.on('click', () => openWatch({ show: true }));
+    n.show();
+  } catch { /* notifications refusées */ }
+}
+
+watch.onChange(() => {
+  presence.setBadge(watch.unreadCount() > 0);
+  pushState();
+  for (const tab of tabs) if (!tab.wc.isDestroyed() && isWatch(tab.wc.getURL())) tab.wc.send('watch:changed');
+});
+
+/** Les canaux watch:* ne répondent qu'à la page interne Veille. */
+function watchHandle(channel, fn) {
+  ipcMain.handle(channel, async (e, payload) => {
+    if (!isWatch(e.senderFrame && e.senderFrame.url)) throw new Error('forbidden');
+    return fn(payload || {});
+  });
+}
+const safe = (fn) => async (p) => { try { return await fn(p); } catch (err) { return { error: String(err.message || err) }; } };
+watchHandle('watch:get', () => watch.snapshot());
+watchHandle('watch:test', safe((p) => watch.test(p)));
+watchHandle('watch:add', safe((p) => watch.add(p)));
+watchHandle('watch:remove', (p) => watch.remove(p.id));
+watchHandle('watch:enable', (p) => watch.setEnabled(p.id, p.enabled));
+watchHandle('watch:read', (p) => watch.markRead(p.ids));
+watchHandle('watch:readSource', (p) => watch.markSourceRead(p.id));
+watchHandle('watch:check', safe((p) => watch.checkNow(p.id)));
+watchHandle('watch:open', (p) => { if (/^https?:/.test(String(p.url || ''))) createTab(p.url); return true; });
 
 // ---------- fenêtres secondaires (À propos, Réglages, mise à jour, Trousseau) ----------
 const panels = {};
@@ -648,6 +732,7 @@ ipcMain.on('nav', (_e, { action, url }) => {
   if (!tab) return;
   const h = tab.wc.navigationHistory;
   if (action === 'go') {
+    if (isWatchAddress(url)) return openWatch();
     const target = toUrl(url);
     if (target) tab.wc.loadURL(target).catch(() => {});
     tab.wc.focus();
@@ -657,6 +742,7 @@ ipcMain.on('nav', (_e, { action, url }) => {
   else if (action === 'stop') tab.wc.stop();
 });
 ipcMain.on('tab:new', () => { createTab(''); focusAddress(); });
+ipcMain.on('watch:open', () => openWatch());
 ipcMain.on('tab:select', (_e, id) => selectTab(id));
 ipcMain.on('tab:close', (_e, id) => closeTab(id));
 ipcMain.on('mobile:toggle', () => toggleMobileForActive());
@@ -719,13 +805,16 @@ ipcMain.handle('settings:get', () => ({
   iconMode: presence.normalize(config.get('iconMode')),
   autoStart: app.isPackaged && autostart.isEnabled(process.execPath),
   autoStartAvailable: app.isPackaged,
+  watchNotify: config.get('watchNotify') !== false,
+  watchFile: watch.FILE,
 }));
 ipcMain.handle('settings:set', (_e, { key, value }) => {
-  if (['autoInstall', 'agentControl'].includes(key)) config.set(key, !!value);
+  if (['autoInstall', 'agentControl', 'watchNotify'].includes(key)) config.set(key, !!value);
   if (key === 'iconMode' && presence.MODES.includes(value)) config.set('iconMode', presence.apply(value));
   if (key === 'autoStart' && app.isPackaged) return autostart.setEnabled(process.execPath, !!value);
   return true;
 });
+ipcMain.handle('settings:openWatch', () => { openWatch({ show: true }); return true; });
 ipcMain.handle('settings:removeMobile', (_e, site) => setMobileSite(site, false));
 ipcMain.handle('settings:copyConfig', () => {
   clipboard.writeText(JSON.stringify({ mcpServers: { wclaude: { command: mcpLauncher(), args: [] } } }, null, 2));
@@ -855,6 +944,11 @@ const routes = {
   'GET /youtube/analytics': (_b, q) => youtube.analytics(q),
   'GET /youtube/captions': (_b, q) => youtube.listCaptions(q.videoId),
   'POST /youtube/caption': (b) => youtube.uploadCaption(b),
+  'GET /watch/digest': () => watch.snapshot(),
+  'GET /watch/history': (_b, q) => watch.history(q.id, Number(q.limit) || 20),
+  'POST /watch/add': (b) => watch.add(b),
+  'POST /watch/check': (b) => watch.checkNow(b.id, { wait: b.wait !== false }),
+  'POST /watch/read': (b) => ({ marked: watch.markRead(b.ids) }),
   'POST /activity': (b) => {
     const key = 'act.' + String(b.action || '');
     agent.label = i18n.strings[key] ? t(key) : String(b.action || '').slice(0, 40);
@@ -882,6 +976,8 @@ app.whenReady().then(async () => {
   buildMenu();
   presence.init({ getWindow: () => (win && !win.isDestroyed() ? win : null), showWindow, buildMenu: trayMenu, tooltip: () => 'wCLAUDE' });
   presence.apply(config.get('iconMode'));
+  presence.setBadge(watch.unreadCount() > 0);
+  watch.start({ userAgent: CHROME_UA, notify: notifyWatch });
   ensureWindow();
   openStartTabs();
   if (AGENT_CONTROL) {

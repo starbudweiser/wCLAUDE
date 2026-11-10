@@ -84,6 +84,9 @@ The server starts wCLAUDE in the background when needed (it never takes the focu
 | `browser_evaluate` | Run JavaScript in the page. |
 | `browser_handle_dialog` / `browser_console` | Answer JavaScript dialogs; read console messages. |
 | `browser_request_user` | Hand over to the user (sign-in, CAPTCHA, two-factor code, blocked access) and wait until they click DONE. |
+| `watch_digest` | What changed in the watched sources since last read, grouped, with each source's note for the agent; then sources that need you or failed. |
+| `watch_list` / `watch_add` | List the watched sources; add one (or update it): page, RSS/Atom feed or GitHub releases, detected automatically. |
+| `watch_check` / `watch_history` / `watch_read` | Check now, read a source's past items, mark items read. |
 | `youtube_status` / `youtube_connect` | YouTube API set-up state; connect the channel (consent in the user's usual browser). |
 | `youtube_channel` / `youtube_list_videos` / `youtube_get_video` | Channel figures, videos with privacy, schedule and statistics, video details. |
 | `youtube_upload_video` / `youtube_upload_status` | Upload a local video of any size in the background (private by default) and follow it. |
@@ -105,6 +108,16 @@ The server starts wCLAUDE in the background when needed (it never takes the focu
 Some steps belong to you: signing in without a saved Keychain entry, CAPTCHAs, two-factor codes, "unusual activity" blocks. When the agent meets one (wCLAUDE flags these pages in its answers), it calls `browser_request_user`: a bar appears under the toolbar with what to do, macOS shows a notification (wCLAUDE does not take the focus), and the agent waits. Click **DONE** when you are finished, or **Cancel**.
 
 Some sites refuse to let you sign in from any browser an agent can control (Google shows "This browser or app may not be secure"). wCLAUDE does not try to hide from those checks: use the site's official API when there is one (YouTube below), or do that task in your usual browser.
+
+## Watch
+
+wCLAUDE can keep an eye on pages, RSS/Atom feeds and GitHub releases while no agent is around, and hand the agent a digest when it comes back (`watch_digest`). Open it with the **Watch** button of the toolbar (address `wclaude://veille`) or from the menu bar icon, which shows a blue dot when there is something new.
+
+- Each source is an address plus a **note for the agent** (what matters, what to ignore); a group can carry a shared brief.
+- **No AI in the app**: detection is deterministic. Pages are read in a hidden wCLAUDE view, with your sessions; feeds and GitHub releases with a plain request. The first reading is the reference and raises no alert. After that: added lines of the page (or of a chosen **page area**), new feed entries, new releases, or a higher version number. **Keywords** limit alerts to additions that mention them. Click **Test** before adding to see what wCLAUDE reads.
+- One silent, grouped notification per pass (it can be turned off in Settings › Watch). Data: `watch.json` in the profile folder.
+
+Limits: the watch only runs while wCLAUDE is open (the menu bar mode, the default, keeps it running; **Settings › Open wCLAUDE at login** makes it permanent). A page that changes all the time gives false alerts: use the page area, keywords and Test. Sign-in walls, CAPTCHAs and anti-bot checks are never bypassed: the source is marked as needing you, and the agent can hand over with `browser_request_user`. Discord and social networks are not supported.
 
 ## YouTube API
 
@@ -128,7 +141,7 @@ wCLAUDE reads the **Internet passwords of your login keychain**. Passwords saved
 
 | What | Where |
 | --- | --- |
-| Profile (cookies, sessions), settings, control file | `~/Library/Application Support/wCLAUDE` |
+| Profile (cookies, sessions), settings, control file, watch (`watch.json`) | `~/Library/Application Support/wCLAUDE` |
 | Downloads | `~/Downloads/wCLAUDE` |
 
 `WCLAUDE_SUPPORT_DIR`, `WCLAUDE_DOWNLOADS_DIR` and `WCLAUDE_CDP_PORT` run a separate edition (tests) without touching your data.

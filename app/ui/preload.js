@@ -1,8 +1,8 @@
 // Pont entre les pages de l'interface (barre d'outils, fenêtres) et le processus principal.
 const { contextBridge, ipcRenderer } = require('electron');
 
-const SEND = new Set(['nav', 'tab:new', 'tab:select', 'tab:close', 'mobile:toggle', 'keychain:fill', 'downloads:menu', 'downloads:open', 'notice:action', 'state:request', 'panel:close', 'toolbar:height', 'handoff:answer']);
-const INVOKE = new Set(['about:info', 'settings:get', 'settings:set', 'settings:removeMobile', 'settings:copyConfig', 'update:state', 'update:check', 'update:install', 'kc:add', 'yt:status', 'yt:import', 'yt:saveClient', 'yt:connect', 'yt:disconnect']);
+const SEND = new Set(['nav', 'tab:new', 'tab:select', 'tab:close', 'mobile:toggle', 'keychain:fill', 'downloads:menu', 'downloads:open', 'notice:action', 'state:request', 'panel:close', 'toolbar:height', 'handoff:answer', 'watch:open']);
+const INVOKE = new Set(['about:info', 'settings:get', 'settings:set', 'settings:removeMobile', 'settings:copyConfig', 'settings:openWatch', 'update:state', 'update:check', 'update:install', 'kc:add', 'yt:status', 'yt:import', 'yt:saveClient', 'yt:connect', 'yt:disconnect']);
 const ON = new Set(['state', 'focus-address', 'update:state']);
 
 const i18n = ipcRenderer.sendSync('i18n');
