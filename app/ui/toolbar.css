@@ -99,3 +99,7 @@ html, body { height: 100%; overflow: hidden; user-select: none; }
 #gutter .site { color: var(--accent-text); font: 13px/18px var(--font-mono); }
 #watch.is-current { background: var(--surface-selected); color: var(--text-strong); }
 .tab.is-pinned { flex: 0 0 auto; min-width: 0; padding-right: var(--space-3); }
+/* Onglet Veille : orange Socle (famille action), actif ou non. */
+.tab.is-pinned { color: var(--action-hover); }
+.tab.is-pinned:hover { color: var(--action); }
+.tab.is-pinned.is-active { color: var(--action); border-bottom-color: var(--action); }
