@@ -70,6 +70,7 @@ const t = (k, v) => i18n.t(k, v);
 const tabById = (id) => tabs.find((x) => x.id === Number(id));
 const tabByWc = (wc) => tabs.find((x) => x.wc === wc || x.wc.id === (wc && wc.id));
 const activeTab = () => tabById(activeId);
+const webTabs = () => tabs.filter((x) => !x.internal);
 const isBusy = () => watch.snapshot().running || Date.now() - agent.at < 120000 || downloads.some((d) => d.state === 'progressing') || (handoff && handoff.status === 'waiting') || youtube.uploading();
 
 // ---------- barre d'outils ----------
@@ -230,8 +231,10 @@ function createTab(url, { activate = true, webContents = null, internal = '' } =
   // Page interne Veille : préchargement dédié (canaux watch:*), qui ne s'active que sur cette page.
   if (internal === 'watch') Object.assign(prefs, { preload: path.join(UI, 'watch-preload.js'), spellcheck: false });
   const view = webContents ? new WebContentsView({ webContents }) : new WebContentsView({ webPreferences: prefs });
-  const tab = { id: nextTabId++, view, wc: view.webContents, mobile: false, title: '', favicon: '', loading: false, targetId: null };
-  tabs.push(tab);
+  const tab = { id: nextTabId++, view, wc: view.webContents, mobile: false, title: '', favicon: '', loading: false, targetId: null, internal };
+  // L'onglet Veille est épinglé : toujours le premier, jamais fermé.
+  if (internal === 'watch') tabs.unshift(tab);
+  else tabs.push(tab);
   win.contentView.addChildView(view);
   const wc = tab.wc;
 
@@ -283,12 +286,12 @@ function selectTab(id) {
 
 function closeTab(id) {
   const i = tabs.findIndex((x) => x.id === Number(id));
-  if (i < 0) return;
+  if (i < 0 || tabs[i].internal === 'watch') return; // onglet Veille : jamais fermé
   const [tab] = tabs.splice(i, 1);
   if (win && !win.isDestroyed()) win.contentView.removeChildView(tab.view);
   if (!tab.wc.isDestroyed()) tab.wc.close();
   if (activeId === tab.id) activeId = tabs.length ? tabs[Math.min(i, tabs.length - 1)].id : null;
-  if (!tabs.length && win && !win.isDestroyed()) createTab('');
+  if (!tabs.some((x) => !x.internal) && win && !win.isDestroyed()) createTab(''); // toujours un onglet web
   layout();
   pushState();
 }
@@ -381,6 +384,7 @@ function saveTabs() {
 }
 
 function openStartTabs() {
+  if (!tabs.some((x) => x.internal === 'watch')) createTab(WATCH_URL, { internal: 'watch', activate: false });
   const urls = config.get('lastTabs') || [];
   if (urls.length) urls.forEach((u, i) => createTab(u, { activate: i === 0 }));
   else createTab('');
@@ -889,7 +893,7 @@ async function waitTarget(tab) {
 const routes = {
   'GET /state': () => ({
     version: app.getVersion(),
-    tabs: tabs.map(publicTab),
+    tabs: webTabs().map(publicTab), // l'onglet Veille n'est pas proposé aux agents : ils passent par les outils watch_*
     activeId,
     downloadsDir: config.DOWNLOADS_DIR,
     mobileSites: config.get('mobileSites'),
@@ -897,9 +901,9 @@ const routes = {
   'POST /tabs/ensure': async () => {
     const created = !win || win.isDestroyed() || !tabs.length;
     if (!win || win.isDestroyed()) ensureWindow({ quiet: true });
-    if (!tabs.length) openStartTabs();
+    if (!webTabs().length) openStartTabs();
     await Promise.all(tabs.map((x) => x.ready));
-    return { created, tabs: tabs.map(publicTab), activeId };
+    return { created, tabs: webTabs().map(publicTab), activeId };
   },
   'POST /tabs/new': async (b) => {
     const tab = createTab(b.url ? toUrl(b.url) : '', { activate: b.activate !== false });

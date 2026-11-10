@@ -78,10 +78,10 @@ function renderTabs() {
   const box = $('tabs');
   const agentTab = state.agent && Date.now() - state.agent.at < 5000 ? state.agent.tabId : null;
   box.innerHTML = state.tabs.map((tab) => `
-    <div class="tab${tab.active ? ' is-active' : ''}${tab.id === agentTab ? ' is-agent' : ''}" role="tab" aria-selected="${tab.active}" data-id="${tab.id}" title="${esc(tabTitle(tab))}">
+    <div class="tab${tab.active ? ' is-active' : ''}${tab.internal ? ' is-pinned' : ''}${tab.id === agentTab ? ' is-agent' : ''}" role="tab" aria-selected="${tab.active}" data-id="${tab.id}" title="${esc(tabTitle(tab))}">
       <span class="fav">${tab.id === agentTab ? icon('sparkles') : tab.internal === 'watch' ? icon('eye') : tab.favicon ? `<img src="${esc(tab.favicon)}" alt="">` : icon('globe')}</span>
       <span class="title">${esc(tab.loading && !tab.title ? t('tab.loading') : tabTitle(tab))}</span>
-      <button class="close" type="button" data-close="${tab.id}" aria-label="${esc(t('tab.close'))}" title="${esc(t('tab.close'))}">${icon('x')}</button>
+      ${tab.internal === 'watch' ? '' : `<button class="close" type="button" data-close="${tab.id}" aria-label="${esc(t('tab.close'))}" title="${esc(t('tab.close'))}">${icon('x')}</button>`}
     </div>`).join('');
   for (const img of box.querySelectorAll('.fav img')) img.onerror = () => { img.replaceWith(document.createRange().createContextualFragment(icon('globe'))); };
   box.onclick = (e) => {
@@ -92,7 +92,7 @@ function renderTabs() {
   };
   box.onauxclick = (e) => {
     const tab = e.target.closest('.tab');
-    if (tab && e.button === 1) send('tab:close', Number(tab.dataset.id));
+    if (tab && e.button === 1 && !tab.classList.contains('is-pinned')) send('tab:close', Number(tab.dataset.id));
   };
 }
 

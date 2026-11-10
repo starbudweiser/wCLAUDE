@@ -98,3 +98,4 @@ html, body { height: 100%; overflow: hidden; user-select: none; }
 #gutter .label { font: 700 15px/22px var(--font-sans); letter-spacing: .025em; color: var(--text-strong); }
 #gutter .site { color: var(--accent-text); font: 13px/18px var(--font-mono); }
 #watch.is-current { background: var(--surface-selected); color: var(--text-strong); }
+.tab.is-pinned { flex: 0 0 auto; min-width: 0; padding-right: var(--space-3); }
