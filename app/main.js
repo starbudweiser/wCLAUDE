@@ -391,6 +391,13 @@ function trayMenu() {
       : { label: t('tray.show'), click: () => showWindow() },
     { label: t('menu.newTab'), click: () => { showWindow(); createTab(''); focusAddress(); } },
     { type: 'separator' },
+    {
+      label: t('settings.icon'),
+      submenu: presence.MODES.map((mode) => ({
+        label: t(`settings.icon.${mode}`), type: 'radio', checked: presence.normalize(config.get('iconMode')) === mode,
+        click: () => { config.set('iconMode', presence.apply(mode)); if (mode === 'dock') showWindow(); },
+      })),
+    },
     { label: t('menu.settings'), click: front(() => openPanel('settings', 1160)) },
     { label: t('menu.checkUpdates'), click: front(() => openPanel('update', 480, { manual: '1' })) },
     { label: t('menu.about'), click: front(() => openPanel('about', 356)) },
