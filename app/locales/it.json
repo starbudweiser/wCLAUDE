@@ -189,5 +189,8 @@
   "settings.iconHint": "Dove appare wCLAUDE. Nella barra dei menu, un clic sull'icona mostra o nasconde la finestra, un clic destro apre il suo menu.",
   "settings.icon.dock": "Nel Dock",
   "settings.icon.menubar": "Nella barra dei menu",
-  "settings.icon.both": "Entrambi"
+  "settings.icon.both": "Entrambi",
+  "settings.autoStart": "Apri wCLAUDE all'accesso, in background",
+  "settings.autoStartHint": "wCLAUDE si avvia nascosto all'apertura della sessione, sempre pronto per gli agenti, e si riavvia da solo se si interrompe in modo imprevisto. Uscire da wCLAUDE lo arresta fino alla sessione successiva.",
+  "settings.autoStartDev": "Disponibile solo nell'app installata."
 }

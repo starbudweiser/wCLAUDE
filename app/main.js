@@ -11,6 +11,7 @@ const updater = require('./lib/updater');
 const control = require('./lib/control');
 const youtube = require('./lib/youtube');
 const presence = require('./lib/presence');
+const autostart = require('./lib/autostart');
 const pkg = require('../package.json');
 
 const UI = path.join(__dirname, 'ui');
@@ -716,10 +717,13 @@ ipcMain.handle('settings:get', () => ({
   lastAgent: config.get('lastAgent') || '',
   update: updater.publicState(),
   iconMode: presence.normalize(config.get('iconMode')),
+  autoStart: app.isPackaged && autostart.isEnabled(process.execPath),
+  autoStartAvailable: app.isPackaged,
 }));
 ipcMain.handle('settings:set', (_e, { key, value }) => {
   if (['autoInstall', 'agentControl'].includes(key)) config.set(key, !!value);
   if (key === 'iconMode' && presence.MODES.includes(value)) config.set('iconMode', presence.apply(value));
+  if (key === 'autoStart' && app.isPackaged) return autostart.setEnabled(process.execPath, !!value);
   return true;
 });
 ipcMain.handle('settings:removeMobile', (_e, site) => setMobileSite(site, false));

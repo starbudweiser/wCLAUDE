@@ -189,5 +189,8 @@
   "settings.iconHint": "Where wCLAUDE appears. In the menu bar, click the icon to show or hide the window, right-click it for its menu.",
   "settings.icon.dock": "In the Dock",
   "settings.icon.menubar": "In the menu bar",
-  "settings.icon.both": "Both"
+  "settings.icon.both": "Both",
+  "settings.autoStart": "Open wCLAUDE at login, in the background",
+  "settings.autoStartHint": "wCLAUDE starts hidden when you log in, always ready for agents, and restarts by itself if it stops unexpectedly. Quitting wCLAUDE stops it until your next login.",
+  "settings.autoStartDev": "Only available in the installed app."
 }

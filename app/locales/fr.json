@@ -189,5 +189,8 @@
   "settings.iconHint": "Où wCLAUDE apparaît. Avec la barre de menus, un clic sur l'icône affiche ou masque la fenêtre, un clic droit ouvre son menu.",
   "settings.icon.dock": "Dans le Dock",
   "settings.icon.menubar": "Dans la barre de menus",
-  "settings.icon.both": "Les deux"
+  "settings.icon.both": "Les deux",
+  "settings.autoStart": "Ouvrir wCLAUDE avec la session, en arrière-plan",
+  "settings.autoStartHint": "wCLAUDE démarre caché à l'ouverture de session, toujours prêt pour les agents, et redémarre seul s'il s'arrête de façon inattendue. Quitter wCLAUDE l'arrête jusqu'à la prochaine session.",
+  "settings.autoStartDev": "Disponible dans l'appli installée seulement."
 }

@@ -64,3 +64,15 @@ test('domaine enregistrable et sites en version iPhone', () => {
   config.setMobileSite('instagram.com', false);
   assert.ok(!config.isMobileUrl('https://www.instagram.com/'));
 });
+
+test('service de session : agent de lancement valide, caché, relancé seulement après un échec', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const autostart = require('../app/lib/autostart.js');
+  const xml = autostart.plist('/Applications/A & B/wCLAUDE.app/Contents/MacOS/wCLAUDE');
+  assert.match(xml, /<string>--background<\/string>/);
+  assert.match(xml, /<key>SuccessfulExit<\/key><false\/>/);
+  assert.match(xml, /A &amp; B/);
+  const f = path.join(fs.mkdtempSync(path.join(fs.realpathSync(require('os').tmpdir()), 'wclaude-plist-')), 'a.plist');
+  fs.writeFileSync(f, xml);
+  execFileSync('/usr/bin/plutil', ['-lint', f]);
+});

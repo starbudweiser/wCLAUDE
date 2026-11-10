@@ -18,6 +18,7 @@ button { font: inherit; }
 
 .sc-btn--secondary { background: var(--control); }
 .sc-btn.is-on { background: var(--accent-fill); color: var(--on-accent-fill); }
+.sc-option.is-disabled { opacity: var(--opacity-disabled); pointer-events: none; }
 .sc-btn.is-on:hover { background: var(--accent-fill-hover); }
 
 :where(button, input, a, [tabindex]):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }

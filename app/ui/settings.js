@@ -10,6 +10,7 @@ $('agentAllowHint').textContent = t('settings.agentAllowHint');
 $('copyConfig').innerHTML = `${icon('copy')}<span>${esc(t('settings.copyConfig'))}</span>`;
 $('iconTitle').textContent = t('settings.icon');
 $('iconHint').textContent = t('settings.iconHint');
+$('autoStart').querySelector('.sc-option__label').textContent = t('settings.autoStart');
 $('mobileTitle').textContent = t('settings.mobile');
 $('mobileHint').textContent = t('settings.mobileHint');
 $('dlTitle').textContent = t('settings.downloads');
@@ -63,6 +64,10 @@ function renderIconModes(current) {
 async function load() {
   const s = await invoke('settings:get');
   checkbox($('agentAllow'), s.agentControl, (v) => invoke('settings:set', { key: 'agentControl', value: v }));
+  checkbox($('autoStart'), s.autoStart, async (v) => { if (s.autoStartAvailable) s.autoStart = await invoke('settings:set', { key: 'autoStart', value: v }); });
+  $('autoStart').classList.toggle('is-disabled', !s.autoStartAvailable);
+  $('autoStart').setAttribute('aria-disabled', String(!s.autoStartAvailable));
+  $('autoStartHint').textContent = t(s.autoStartAvailable ? 'settings.autoStartHint' : 'settings.autoStartDev');
   checkbox($('updAuto'), s.autoInstall, (v) => invoke('settings:set', { key: 'autoInstall', value: v }));
   $('agentState').textContent = s.agentActive ? t('settings.agentState', { port: s.cdpPort }) : t('settings.agentOff');
   $('agentLast').textContent = s.lastAgent ? t('settings.agentConnected', { agent: s.lastAgent }) : '';
