@@ -31,38 +31,63 @@ General-purpose browser tools for agents hit the same walls: uploads capped at a
 
 ## Connect your agent
 
-The MCP server is a launcher inside the app. **wCLAUDE › Settings › Copy MCP configuration** copies the snippet below with the right path. With the app in `~/Applications/Applications Personnelles`:
+wCLAUDE talks to AI agents through the **Model Context Protocol (MCP)**. The MCP server ships inside the app: there is nothing to install, no Node.js, no API key. You only tell your agent where the server is, once.
 
-```
-~/Applications/Applications Personnelles/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp
-```
+### 1. Install and open wCLAUDE
 
-**Claude Code**
+Move `wCLAUDE.app` to `/Applications` (or any folder you like), open it once, and check that **wCLAUDE › Settings › Allow control by an AI agent** is on (it is by default).
 
-```bash
-claude mcp add --scope user wclaude -- "$HOME/Applications/Applications Personnelles/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp"
-```
+### 2. Copy the configuration
 
-**Claude Desktop, Cursor (`~/.cursor/mcp.json`), Gemini CLI (`~/.gemini/settings.json`), Windsurf**
+Click **wCLAUDE › Settings › Copy MCP configuration**. It copies a ready-made block with the exact path of the server on your Mac, for example:
 
 ```json
-{ "mcpServers": { "wclaude": { "command": "/Users/<you>/Applications/Applications Personnelles/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp", "args": [] } } }
+{ "mcpServers": { "wclaude": { "command": "/Applications/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp", "args": [] } } }
 ```
 
-**Codex CLI (`~/.codex/config.toml`)**
+The server is the file `Contents/Resources/app/app/bin/wclaude-mcp` inside the app. If you move the app later, copy the configuration again.
+
+### 3. Add it to your agent
+
+In the examples below, replace the path with yours if the app is not in `/Applications`.
+
+**Claude Code** (in a terminal, then restart Claude Code)
+
+```bash
+claude mcp add --scope user wclaude -- "/Applications/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp"
+```
+
+**Claude Desktop**: **Settings › Developer › Edit Config** opens `~/Library/Application Support/Claude/claude_desktop_config.json`. Paste the copied block (merge it into `mcpServers` if the file already has one), save, then quit and reopen Claude Desktop.
+
+**Cursor** (`~/.cursor/mcp.json`, or **Settings › MCP › Add new MCP server**), **Gemini CLI** (`~/.gemini/settings.json`), **Windsurf** (`~/.codeium/windsurf/mcp_config.json`): paste the same block.
+
+**Codex CLI** (`~/.codex/config.toml`)
 
 ```toml
 [mcp_servers.wclaude]
-command = "/Users/<you>/Applications/Applications Personnelles/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp"
+command = "/Applications/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp"
 ```
 
-**VS Code (`.vscode/mcp.json`)**
+**VS Code** (`.vscode/mcp.json` in a project, or **MCP: Add Server** in the command palette)
 
 ```json
-{ "servers": { "wclaude": { "type": "stdio", "command": "/Users/<you>/Applications/Applications Personnelles/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp" } } }
+{ "servers": { "wclaude": { "type": "stdio", "command": "/Applications/wCLAUDE.app/Contents/Resources/app/app/bin/wclaude-mcp" } } }
 ```
 
-The server starts wCLAUDE in the background when needed (it never takes the focus) and reconnects if the app restarts.
+### 4. Check that it works
+
+Restart the agent, then:
+
+- in Claude Code, type `/mcp`: **wclaude** is listed as connected, with its `browser_*`, `watch_*` and `youtube_*` tools;
+- in any agent, ask: *"List my wCLAUDE tabs"*. The agent calls `browser_tabs` and **wCLAUDE › Settings** shows it as the last connected agent.
+
+The server starts wCLAUDE in the background when needed (it never takes the focus) and reconnects if the app restarts. To keep wCLAUDE always ready, turn on **Settings › Open wCLAUDE at login, in the background**.
+
+### If it does not connect
+
+- *"Could not start wCLAUDE"*: open the app once, and check that **Allow control by an AI agent** is on (changing it takes effect at the next launch).
+- The agent does not list the tools: the path is wrong (app moved or renamed). Copy the configuration again from Settings and restart the agent.
+- New tools after a wCLAUDE update: restart the agent so it reloads the server.
 
 ## Tools
 
