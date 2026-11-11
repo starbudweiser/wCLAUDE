@@ -24,7 +24,13 @@ const WATCH_URL = pathToFileURL(path.join(UI, 'watch.html')).href;
 const WATCH_ADDRESS = 'wclaude://veille';
 const isWatch = (url) => String(url || '').split(/[?#]/)[0] === WATCH_URL;
 const isWatchAddress = (text) => /^wclaude:\/\/(veille|watch)\/?$/i.test(String(text || '').trim());
-const CHROME_UA = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`;
+const identity = require('./lib/identity');
+const DESKTOP = identity.desktopIdentity({
+  chromeVersion: process.versions.chrome,
+  macVersion: typeof process.getSystemVersion === 'function' ? process.getSystemVersion() : '',
+  arch: process.arch,
+});
+const CHROME_UA = DESKTOP.userAgent;
 const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 const IPHONE = { width: 390, height: 844, scale: 3 };
 let TOOLBAR_H = 92; // rangée des onglets (40) + barre de navigation (52) + barre du relais quand elle est affichée (mesurée par la page)
@@ -172,7 +178,7 @@ async function applyEmulation(tab) {
         tab.platformScript = (await d.sendCommand('Page.addScriptToEvaluateOnNewDocument', { source: IPHONE_PLATFORM })).identifier;
       }
     } else {
-      await d.sendCommand('Emulation.setUserAgentOverride', { userAgent: CHROME_UA, platform: 'MacIntel' });
+      await d.sendCommand('Emulation.setUserAgentOverride', { userAgent: CHROME_UA, platform: 'MacIntel', userAgentMetadata: DESKTOP.metadata });
       await d.sendCommand('Emulation.clearDeviceMetricsOverride');
       await d.sendCommand('Emulation.setTouchEmulationEnabled', { enabled: false });
       await d.sendCommand('Emulation.setEmitTouchEventsForMouse', { enabled: false });
@@ -711,8 +717,15 @@ function downloadsMenu() {
 }
 
 // ---------- session : identité, version iPhone, autorisations ----------
+function acceptLanguages() {
+  // Même liste que navigator.languages (langue de l'appli puis langues du système), comme Chrome.
+  const out = [];
+  for (const l of [app.getLocale(), ...app.getPreferredSystemLanguages()]) if (l && !out.includes(l)) out.push(l);
+  return out.length ? out.join(',') : 'en-US,en';
+}
+
 function setupSession(ses) {
-  ses.setUserAgent(CHROME_UA);
+  ses.setUserAgent(CHROME_UA, acceptLanguages());
   ses.webRequest.onBeforeSendHeaders((details, cb) => {
     const tab = tabs.find((x) => x.wc.id === details.webContentsId);
     let mobile = tab ? tab.mobile : false;
@@ -721,6 +734,9 @@ function setupSession(ses) {
     if (mobile) {
       headers['User-Agent'] = IPHONE_UA;
       for (const k of Object.keys(headers)) if (/^sec-ch-ua/i.test(k)) delete headers[k];
+    } else if (/^https:/i.test(details.url) && !Object.keys(headers).some((k) => /^sec-ch-ua$/i.test(k))) {
+      // Requêtes hors onglet (Veille, service workers) : mêmes Client Hints que Chrome.
+      Object.assign(headers, DESKTOP.headers);
     }
     cb({ requestHeaders: headers });
   });

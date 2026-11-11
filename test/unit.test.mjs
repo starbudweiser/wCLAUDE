@@ -114,3 +114,18 @@ test('veille : flux RSS et Atom, lien de flux, GitHub, barrières', () => {
   assert.equal(core.needsUser({ text: 'Sign in', hasPassword: true }), 'signin');
   assert.equal(core.needsUser({ text: 'A long normal article' }), null);
 });
+
+test('identité Chrome : user agent réduit et Client Hints identiques au vrai Chrome', () => {
+  const { desktopIdentity } = require('../app/lib/identity.js');
+  // Valeurs relevées sur Chrome 120 et 131 pour Mac.
+  assert.equal(desktopIdentity({ chromeVersion: '120.0.6099.71' }).headers['sec-ch-ua'],
+    '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"');
+  assert.equal(desktopIdentity({ chromeVersion: '131.0.6778.86' }).headers['sec-ch-ua'],
+    '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"');
+  const id = desktopIdentity({ chromeVersion: '156.0.8078.80', macVersion: '27.2', arch: 'arm64' });
+  assert.match(id.userAgent, /Chrome\/156\.0\.0\.0 Safari\/537\.36$/);
+  assert.equal(id.metadata.platform, 'macOS');
+  assert.equal(id.metadata.platformVersion, '27.2.0');
+  assert.equal(id.metadata.architecture, 'arm');
+  assert.equal(id.metadata.fullVersionList.find((b) => b.brand === 'Google Chrome').version, '156.0.8078.80');
+});
