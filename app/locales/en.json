@@ -280,5 +280,12 @@
   "settings.watch": "Watch",
   "settings.watchHint": "wCLAUDE checks your sources while it is open (the menu bar keeps it running) and notes what is new for your AI agent. No AI inside the app, no protection bypassed.",
   "settings.watchNotify": "Notify with a silent notification",
-  "settings.watchOpen": "Open the watch"
+  "settings.watchOpen": "Open the watch",
+  "import.menu": "Import Google Session from {browser}…",
+  "import.title": "Session import",
+  "import.done": "{count} cookies imported from {browser} (Google and {site}). You are signed in with the same account as in {browser}.",
+  "import.none": "No Google session found in {browser}. Sign in to Google in {browser} first, then try again.",
+  "import.error.denied": "Access to the {browser} key in the Keychain was denied. Try again and click “Allow” in the macOS window.",
+  "import.error.nokey": "The {browser} key was not found in the Keychain. Open {browser} once, then try again.",
+  "import.error.read": "Could not read the {browser} cookies."
 }

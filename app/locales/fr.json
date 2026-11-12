@@ -280,5 +280,12 @@
   "settings.watch": "Veille",
   "settings.watchHint": "wCLAUDE relit vos sources tant qu'il est ouvert (la barre de menus le garde actif) et note les nouveautés pour votre agent IA. Aucune IA dans l'appli, aucune protection contournée.",
   "settings.watchNotify": "Prévenir par une notification silencieuse",
-  "settings.watchOpen": "Ouvrir la veille"
+  "settings.watchOpen": "Ouvrir la veille",
+  "import.menu": "Importer la session Google depuis {browser}…",
+  "import.title": "Import de session",
+  "import.done": "{count} cookies importés depuis {browser} (Google et {site}). Vous êtes connecté avec le même compte que dans {browser}.",
+  "import.none": "Aucune session Google trouvée dans {browser}. Connectez-vous d'abord à Google dans {browser}, puis recommencez.",
+  "import.error.denied": "Accès refusé à la clé de {browser} dans le Trousseau. Recommencez et cliquez sur « Autoriser » dans la fenêtre de macOS.",
+  "import.error.nokey": "Clé de {browser} introuvable dans le Trousseau. Ouvrez {browser} une fois, puis recommencez.",
+  "import.error.read": "Impossible de lire les cookies de {browser}."
 }

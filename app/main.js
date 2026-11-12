@@ -13,6 +13,7 @@ const youtube = require('./lib/youtube');
 const presence = require('./lib/presence');
 const autostart = require('./lib/autostart');
 const watch = require('./lib/watch');
+const browserImport = require('./lib/browserimport');
 const pkg = require('../package.json');
 
 const UI = path.join(__dirname, 'ui');
@@ -571,6 +572,7 @@ function buildMenu() {
         { label: t('menu.openLocation'), accelerator: 'CmdOrCtrl+L', click: () => focusAddress() },
         { type: 'separator' },
         { label: t('menu.addKeychain'), click: () => openKeychainAdd() },
+        ...browserImport.available().map((b) => ({ label: t('import.menu', { browser: b.name }), click: () => importFromBrowser(b) })),
       ],
     },
     {
@@ -636,6 +638,35 @@ function openKeychainAdd() {
   const tab = activeTab();
   const site = tab ? config.registrableDomain(config.hostOf(tab.wc.getURL())) : '';
   openPanel('kcadd', 480, { site });
+}
+
+// ---------- import de session depuis un autre navigateur ----------
+// Google refuse la connexion dans wCLAUDE : l'utilisateur se connecte dans son navigateur habituel, puis
+// recopie ici sa session Google et celle du site ouvert (cookies, clé lue au Trousseau avec son accord).
+let importing = false;
+async function importFromBrowser(browser) {
+  if (importing) return;
+  importing = true;
+  const tab = activeTab();
+  const url = tab ? tab.wc.getURL() : '';
+  const siteDomain = /^https?:/i.test(url) ? config.registrableDomain(config.hostOf(url)) : '';
+  let res;
+  try {
+    res = await browserImport.importSession({
+      browser, siteDomain, ses: session.defaultSession,
+      getSecret: async (service, account) => {
+        try { const value = await keychain.secretGet(service, account); return { found: !!value, value }; } catch { return { error: 'denied' }; }
+      },
+    });
+  } catch { res = { error: 'read' }; }
+  importing = false;
+  const ok = !res.error && res.imported > 0;
+  const detail = res.error ? t('import.error.' + res.error, { browser: browser.name })
+    : ok ? t('import.done', { count: res.imported, browser: browser.name, site: siteDomain || 'google.com' })
+      : t('import.none', { browser: browser.name });
+  if (ok && tab && !tab.wc.isDestroyed() && /^https?:/i.test(url)) tab.wc.reload();
+  const opts = { type: ok ? 'info' : 'warning', message: t('import.title'), detail, buttons: ['OK'] };
+  if (win && !win.isDestroyed() && win.isVisible()) dialog.showMessageBox(win, opts); else dialog.showMessageBox(opts);
 }
 
 // ---------- Trousseau ----------

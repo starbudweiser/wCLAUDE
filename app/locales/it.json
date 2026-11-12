@@ -280,5 +280,12 @@
   "settings.watch": "Monitoraggio",
   "settings.watchHint": "wCLAUDE controlla le tue fonti finché è aperto (la barra dei menu lo tiene attivo) e annota le novità per il tuo agente IA. Nessuna IA nell'app, nessuna protezione aggirata.",
   "settings.watchNotify": "Avvisa con una notifica silenziosa",
-  "settings.watchOpen": "Apri il monitoraggio"
+  "settings.watchOpen": "Apri il monitoraggio",
+  "import.menu": "Importa la sessione Google da {browser}…",
+  "import.title": "Importazione della sessione",
+  "import.done": "{count} cookie importati da {browser} (Google e {site}). Hai effettuato l'accesso con lo stesso account di {browser}.",
+  "import.none": "Nessuna sessione Google trovata in {browser}. Accedi prima a Google in {browser}, poi riprova.",
+  "import.error.denied": "Accesso negato alla chiave di {browser} nel Portachiavi. Riprova e fai clic su «Consenti» nella finestra di macOS.",
+  "import.error.nokey": "Chiave di {browser} non trovata nel Portachiavi. Apri {browser} una volta, poi riprova.",
+  "import.error.read": "Impossibile leggere i cookie di {browser}."
 }

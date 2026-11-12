@@ -280,5 +280,12 @@
   "settings.watch": "Vigilancia",
   "settings.watchHint": "wCLAUDE revisa sus fuentes mientras está abierto (la barra de menús lo mantiene activo) y anota las novedades para su agente de IA. Sin IA en la app, sin eludir ninguna protección.",
   "settings.watchNotify": "Avisar con una notificación silenciosa",
-  "settings.watchOpen": "Abrir la vigilancia"
+  "settings.watchOpen": "Abrir la vigilancia",
+  "import.menu": "Importar la sesión de Google desde {browser}…",
+  "import.title": "Importación de sesión",
+  "import.done": "{count} cookies importadas desde {browser} (Google y {site}). Ha iniciado sesión con la misma cuenta que en {browser}.",
+  "import.none": "No se encontró ninguna sesión de Google en {browser}. Inicie sesión en Google en {browser} y vuelva a intentarlo.",
+  "import.error.denied": "Se denegó el acceso a la clave de {browser} en el Llavero. Vuelva a intentarlo y pulse «Permitir» en la ventana de macOS.",
+  "import.error.nokey": "No se encontró la clave de {browser} en el Llavero. Abra {browser} una vez y vuelva a intentarlo.",
+  "import.error.read": "No se pudieron leer las cookies de {browser}."
 }

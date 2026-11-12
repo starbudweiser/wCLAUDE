@@ -129,3 +129,31 @@ test('identité Chrome : user agent réduit et Client Hints identiques au vrai C
   assert.equal(id.metadata.architecture, 'arm');
   assert.equal(id.metadata.fullVersionList.find((b) => b.brand === 'Google Chrome').version, '156.0.8078.80');
 });
+
+// Import de session depuis un navigateur Chromium : déchiffrement « v10 » et conversion des cookies.
+test('import de session : déchiffrement et cookies', () => {
+  const bi = require('../app/lib/browserimport.js');
+  const crypto = require('node:crypto');
+  const key = bi.deriveKey('secret');
+  const enc = (plain, prefix = Buffer.alloc(0)) => {
+    const c = crypto.createCipheriv('aes-128-cbc', key, Buffer.alloc(16, 0x20));
+    return Buffer.concat([Buffer.from('v10'), c.update(Buffer.concat([prefix, Buffer.from(plain)])), c.final()]);
+  };
+  assert.equal(bi.decrypt(enc('abc'), key, 23), 'abc');
+  assert.equal(bi.decrypt(enc('abc', Buffer.alloc(32, 7)), key, 24), 'abc');
+  assert.equal(bi.decrypt(Buffer.from('v11xxxx'), key, 24), null);
+  assert.ok(bi.matchesDomain('.accounts.google.com', bi.GOOGLE));
+  assert.ok(bi.matchesDomain('www.flowmusic.app', ['flowmusic.app']));
+  assert.ok(!bi.matchesDomain('notgoogle.com', bi.GOOGLE));
+  const micros = (sec) => BigInt(sec + 11644473600) * 1000000n;
+  const now = 1_800_000_000;
+  const row = { host_key: '.google.com', name: 'SID', path: '/', is_secure: 1, is_httponly: 1, has_expires: 1, samesite: -1, expires_utc: micros(now + 100) };
+  const c = bi.toElectronCookie(row, 'v', now);
+  assert.equal(c.url, 'https://google.com/');
+  assert.equal(c.domain, '.google.com');
+  assert.equal(c.expirationDate, now + 100);
+  assert.equal(c.sameSite, 'unspecified');
+  assert.equal(bi.toElectronCookie({ ...row, expires_utc: micros(now - 1) }, 'v', now), null);
+  const host = bi.toElectronCookie({ ...row, host_key: 'accounts.google.com', name: '__Host-GAPS' }, 'v', now);
+  assert.equal(host.domain, undefined);
+});
