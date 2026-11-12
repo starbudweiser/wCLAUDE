@@ -110,7 +110,7 @@ async function importSession({ browser, siteDomain, ses, getSecret, root = SUPPO
   const domains = [...GOOGLE];
   if (siteDomain && !domains.includes(siteDomain)) domains.push(siteDomain);
   let cookies;
-  try { cookies = readCookies(browser, secret.value, domains, root); } catch { return { error: 'read' }; }
+  try { cookies = readCookies(browser, secret.value, domains, root); } catch (e) { return { error: e && (e.code === 'EPERM' || e.code === 'EACCES') ? 'perm' : 'read' }; }
   let imported = 0;
   for (const c of cookies) {
     try { await ses.cookies.set(c); imported++; } catch { /* cookie refusé par Chromium : ignoré */ }

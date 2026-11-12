@@ -287,5 +287,7 @@
   "import.none": "Nessuna sessione Google trovata in {browser}. Accedi prima a Google in {browser}, poi riprova.",
   "import.error.denied": "Accesso negato alla chiave di {browser} nel Portachiavi. Riprova e fai clic su «Consenti» nella finestra di macOS.",
   "import.error.nokey": "Chiave di {browser} non trovata nel Portachiavi. Apri {browser} una volta, poi riprova.",
-  "import.error.read": "Impossibile leggere i cookie di {browser}."
+  "import.error.read": "Impossibile leggere i cookie di {browser}.",
+  "import.error.perm": "macOS blocca la lettura dei dati di {browser}. Attiva wCLAUDE in Impostazioni di Sistema → Privacy e sicurezza → Accesso completo al disco, poi chiudi e riapri wCLAUDE.",
+  "import.openSettings": "Apri Impostazioni"
 }

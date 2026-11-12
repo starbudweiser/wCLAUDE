@@ -287,5 +287,7 @@
   "import.none": "Aucune session Google trouvée dans {browser}. Connectez-vous d'abord à Google dans {browser}, puis recommencez.",
   "import.error.denied": "Accès refusé à la clé de {browser} dans le Trousseau. Recommencez et cliquez sur « Autoriser » dans la fenêtre de macOS.",
   "import.error.nokey": "Clé de {browser} introuvable dans le Trousseau. Ouvrez {browser} une fois, puis recommencez.",
-  "import.error.read": "Impossible de lire les cookies de {browser}."
+  "import.error.read": "Impossible de lire les cookies de {browser}.",
+  "import.error.perm": "macOS bloque la lecture des données de {browser}. Active wCLAUDE dans Réglages Système → Confidentialité et sécurité → Accès complet au disque, puis quitte et relance wCLAUDE.",
+  "import.openSettings": "Ouvrir les Réglages"
 }

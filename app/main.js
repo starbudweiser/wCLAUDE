@@ -665,8 +665,9 @@ async function importFromBrowser(browser) {
     : ok ? t('import.done', { count: res.imported, browser: browser.name, site: siteDomain || 'google.com' })
       : t('import.none', { browser: browser.name });
   if (ok && tab && !tab.wc.isDestroyed() && /^https?:/i.test(url)) tab.wc.reload();
-  const opts = { type: ok ? 'info' : 'warning', message: t('import.title'), detail, buttons: ['OK'] };
-  if (win && !win.isDestroyed() && win.isVisible()) dialog.showMessageBox(win, opts); else dialog.showMessageBox(opts);
+  const opts = { type: ok ? 'info' : 'warning', message: t('import.title'), detail, buttons: res.error === 'perm' ? [t('import.openSettings'), 'OK'] : ['OK'] };
+  const box = win && !win.isDestroyed() && win.isVisible() ? dialog.showMessageBox(win, opts) : dialog.showMessageBox(opts);
+  box.then((r) => { if (res.error === 'perm' && r.response === 0) shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles'); });
 }
 
 // ---------- Trousseau ----------

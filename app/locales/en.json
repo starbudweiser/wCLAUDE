@@ -287,5 +287,7 @@
   "import.none": "No Google session found in {browser}. Sign in to Google in {browser} first, then try again.",
   "import.error.denied": "Access to the {browser} key in the Keychain was denied. Try again and click “Allow” in the macOS window.",
   "import.error.nokey": "The {browser} key was not found in the Keychain. Open {browser} once, then try again.",
-  "import.error.read": "Could not read the {browser} cookies."
+  "import.error.read": "Could not read the {browser} cookies.",
+  "import.error.perm": "macOS blocks reading {browser} data. Turn on wCLAUDE in System Settings → Privacy & Security → Full Disk Access, then quit and relaunch wCLAUDE.",
+  "import.openSettings": "Open Settings"
 }
