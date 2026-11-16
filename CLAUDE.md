@@ -22,6 +22,9 @@ Interface : suivre le design system Socle — https://claude.ai/artifact/TkNj2Y6
 - Le serveur ne doit pas transmettre `ELECTRON_RUN_AS_NODE` à l'appli qu'il lance.
 - Textes visibles : clés dans `app/locales/{fr,en,es,it}.json` (français d'abord), vérifiées par `npm test`.
 
+- Connexion Google : refusée dans une fenêtre pilotée ; contournée proprement par l'import de session depuis un
+  navigateur Chromium installé (menu Fichier, `app/lib/browserimport.js`), cookies conservés dans le profil persistant.
+
 ## Build et essais
 `scripts/build.sh` (signe avec `sign_app.sh`, installe dans `~/Applications/Applications Personnelles`),
 `npm test`, `node test/e2e.mjs <gros-fichier> [lanceur]` avec `node test/fixtures-server.mjs` lancé.

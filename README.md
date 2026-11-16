@@ -132,7 +132,7 @@ The server starts wCLAUDE in the background when needed (it never takes the focu
 
 Some steps belong to you: signing in without a saved Keychain entry, CAPTCHAs, two-factor codes, "unusual activity" blocks. When the agent meets one (wCLAUDE flags these pages in its answers), it calls `browser_request_user`: a bar appears under the toolbar with what to do, macOS shows a notification (wCLAUDE does not take the focus), and the agent waits. Click **DONE** when you are finished, or **Cancel**.
 
-Some sites refuse to let you sign in from any browser an agent can control (Google shows "This browser or app may not be secure"). wCLAUDE does not try to hide from those checks: use the site's official API when there is one (YouTube below), or do that task in your usual browser.
+Some sites refuse to let you sign in from any browser an agent can control (Google shows "This browser or app may not be secure"). wCLAUDE does not try to hide from those checks. Instead, **File › Import Google Session from <browser>…** copies the Google session (and the one of the site currently open) from a Chromium browser where you are already signed in (Chrome, Brave, Edge, Vivaldi): you sign in there yourself, once, and wCLAUDE keeps the session in its persistent profile, so it stays signed in after a relaunch (Google Flow, Flow Music, Gemini, YouTube…). The agent never sees or types your password. When the session expires, import it again.
 
 ## Watch
 

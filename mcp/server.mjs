@@ -180,7 +180,7 @@ async function pageLine(page, tab) {
 async function blockerNote(page) {
   const url = page.url();
   if (/^https:\/\/accounts\.google\.com\/.*\/rejected/.test(url)) {
-    return '\nThe site refused this browser for sign-in. Do not retry: tell the user, and prefer an official API if one exists.';
+    return '\nGoogle refused sign-in in this browser. Do not retry: ask the user to run File › Import Google Session from <their browser> in wCLAUDE (they sign in to Google in their usual browser first), or prefer an official API if one exists.';
   }
   const info = await page.evaluate(() => {
     const frames = [...document.querySelectorAll('iframe')].map((f) => f.src || '').join(' ');
@@ -273,6 +273,7 @@ const server = new McpServer(
       'Mobile-only features (e.g. Instagram profile links): browser_mobile_mode switches a site to the iPhone version (user agent, screen and touch).',
       'Sign-in: never ask for or type passwords. Use browser_keychain_fill; the user approves in a macOS dialog and the password is never shared with you. Typing into password or payment-card fields is blocked.',
       'When a page needs the user (sign-in without a saved Keychain entry, CAPTCHA, two-factor code, "unusual activity" block), call browser_request_user: wCLAUDE asks the user to act in its window and returns when they are done. Never try to get past those checks yourself.',
+      'Google: the user\'s Google session (Flow, Flow Music, Gemini, YouTube…) is normally already signed in. If a Google page asks to sign in, never try it yourself: ask the user to use File › Import Google Session from <browser> in wCLAUDE.',
       'Watch: wCLAUDE checks the user\'s watched pages, feeds and GitHub releases while you are away. Call watch_digest when you start a task that may relate to them (or when the user asks what is new), then watch_read the items you have handled.',
       'YouTube: prefer the youtube_* tools (official API) over driving YouTube Studio pages; they upload videos of any size and read statistics reliably.',
       'Ask the user before publishing, posting, sending a message, buying, accepting terms or deleting anything.',
