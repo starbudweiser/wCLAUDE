@@ -78,6 +78,7 @@
   "about.title": "Acerca de wCLAUDE",
   "about.version": "Versión {version} ({build})",
   "about.license": "Licencia MIT. © 2026 Starbudweiser.",
+  "about.toolkit": "Forma parte del DESKTOP MAC TOOLKIT.",
   "about.disclaimer": "Se proporciona tal cual, sin garantía.",
   "about.origin": "Construido con Electron y Chromium, sin relación con sus autores.",
   "settings.title": "Ajustes",

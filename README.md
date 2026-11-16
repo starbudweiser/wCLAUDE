@@ -4,8 +4,8 @@ A macOS browser that any MCP-compatible AI agent can fully drive — tabs, readi
 
 ## About
 
-- **Authors:** Starbudweiser & Claude Code (Anthropic)
-- **License:** MIT. © 2026 Starbudweiser.
+- wCLAUDE is made by Starbudweiser & Claude Code (Anthropic). Part of the **DESKTOP MAC TOOLKIT**.
+- **License:** MIT, © 2026 Starbudweiser (see `LICENSE`).
 - **Disclaimer:** provided as is, without warranty. Built with Electron and Chromium, not affiliated with their authors.
 - Version, credits and license are also shown in the app: **wCLAUDE menu › About wCLAUDE**.
 

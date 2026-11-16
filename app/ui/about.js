@@ -2,6 +2,7 @@ import { t, $, invoke, brand, fit } from './panel.js';
 const info = await invoke('about:info');
 $('version').textContent = t('about.version', info);
 $('desc').textContent = t('app.description');
+$('toolkit').textContent = t('about.toolkit');
 $('license').textContent = t('about.license');
 $('disclaimer').textContent = t('about.disclaimer');
 $('origin').textContent = t('about.origin');
