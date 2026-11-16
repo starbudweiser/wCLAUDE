@@ -9,6 +9,8 @@ A macOS browser that any MCP-compatible AI agent can fully drive — tabs, readi
 - **Disclaimer:** provided as is, without warranty. Built with Electron and Chromium, not affiliated with their authors.
 - Version, credits and license are also shown in the app: **wCLAUDE menu › About wCLAUDE**.
 
+![The wCLAUDE browser window showing a public example page, with tabs and the iPhone, Keychain, Downloads and Watch toolbar.](docs/screenshot.png)
+
 ## Why
 
 General-purpose browser tools for agents hit the same walls: uploads capped at a few megabytes, browsers that screen control can only *read*, mobile-only site features (an Instagram profile link, for instance) that desktop emulation does not unlock, and downloads that land somewhere the agent cannot find. wCLAUDE removes those technical limits:
