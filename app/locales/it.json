@@ -178,7 +178,7 @@
   "yt.uploaded": "Video inviato su YouTube: {name}",
   "yt.uploadFailed": "L'invio di {name} su YouTube non è riuscito.",
   "act.youtube": "API di YouTube",
-  "settings.youtubeClientId": "ID client",
+  "settings.youtubeClientId": "ID cliente",
   "settings.youtubeClientSecret": "Segreto del client",
   "settings.youtubeSave": "Salva la chiave",
   "settings.youtubeBadValues": "L'ID client deve terminare con .apps.googleusercontent.com e il segreto non può essere vuoto.",
