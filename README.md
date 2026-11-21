@@ -191,3 +191,9 @@ node test/e2e.mjs <big-file> [launcher]   # end-to-end: an MCP client drives the
 ## Languages
 
 French, English, Spanish and Italian, chosen from the system's preferred language (English otherwise).
+
+## Support / Soutenir
+
+This app is free. If it is useful to you, you can support the project (optional, no reward expected): [GitHub Sponsors](https://github.com/sponsors/starbudweiser).
+
+Cette appli est gratuite. Si elle vous est utile, vous pouvez soutenir le projet (facultatif, sans contrepartie) : [GitHub Sponsors](https://github.com/sponsors/starbudweiser).
