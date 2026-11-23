@@ -77,12 +77,14 @@ const t = (k, v) => i18n.t(k, v);
 const tabById = (id) => tabs.find((x) => x.id === Number(id));
 const tabByWc = (wc) => tabs.find((x) => x.wc === wc || x.wc.id === (wc && wc.id));
 const activeTab = () => tabById(activeId);
+// Adresse d'un onglet, vide s'il a été détruit (fermeture, plantage du rendu).
+const urlOf = (tab) => (tab && !tab.wc.isDestroyed() ? tab.wc.getURL() : '');
 const webTabs = () => tabs.filter((x) => !x.internal);
 const isBusy = () => watch.snapshot().running || Date.now() - agent.at < 120000 || downloads.some((d) => d.state === 'progressing') || (handoff && handoff.status === 'waiting') || youtube.uploading();
 
 // ---------- barre d'outils ----------
 function publicTab(tab) {
-  const url = tab.wc.isDestroyed() ? '' : tab.wc.getURL();
+  const url = urlOf(tab);
   return {
     id: tab.id,
     targetId: tab.targetId,
@@ -105,7 +107,7 @@ function pushState() {
     pushQueued = false;
     if (!win || win.isDestroyed()) return;
     const tab = activeTab();
-    const site = tab ? config.registrableDomain(config.hostOf(tab.wc.getURL())) : '';
+    const site = tab ? config.registrableDomain(config.hostOf(urlOf(tab))) : '';
     win.webContents.send('state', {
       tabs: tabs.map(publicTab),
       activeId,
@@ -205,7 +207,7 @@ async function setMobileSite(site, enabled) {
   if (!site) return;
   config.setMobileSite(site, enabled);
   for (const tab of tabs) {
-    const url = tab.wc.getURL();
+    const url = urlOf(tab);
     if (config.registrableDomain(config.hostOf(url)) === site || config.hostOf(url).endsWith('.' + site)) {
       await setMobile(tab, enabled, { reload: true });
     }
@@ -386,7 +388,7 @@ function ensureWindow({ quiet = false } = {}) {
 }
 
 function saveTabs() {
-  const urls = tabs.map((x) => x.wc.getURL()).filter((u) => u && !isNewTab(u) && /^https?:/.test(u));
+  const urls = tabs.map((x) => urlOf(x)).filter((u) => u && !isNewTab(u) && /^https?:/.test(u));
   config.set('lastTabs', urls);
 }
 
@@ -438,7 +440,7 @@ const hhmm = (ms) => (ms ? new Intl.DateTimeFormat(i18n.lang, { hour: '2-digit',
 function openWatch({ show = false } = {}) {
   if (show) showWindow();
   else ensureWindow();
-  const tab = tabs.find((x) => !x.wc.isDestroyed() && isWatch(x.wc.getURL()));
+  const tab = tabs.find((x) => !x.wc.isDestroyed() && isWatch(urlOf(x)));
   if (tab) selectTab(tab.id);
   else createTab(WATCH_URL, { internal: 'watch' });
 }
@@ -481,7 +483,7 @@ function notifyWatch(fresh) {
 watch.onChange(() => {
   presence.setBadge(watch.unreadCount() > 0);
   pushState();
-  for (const tab of tabs) if (!tab.wc.isDestroyed() && isWatch(tab.wc.getURL())) tab.wc.send('watch:changed');
+  for (const tab of tabs) if (!tab.wc.isDestroyed() && isWatch(urlOf(tab))) tab.wc.send('watch:changed');
 });
 
 /** Les canaux watch:* ne répondent qu'à la page interne Veille. */
@@ -629,14 +631,14 @@ function openDownloadsFolder() {
 
 function toggleMobileForActive() {
   const tab = activeTab();
-  const site = tab ? config.registrableDomain(config.hostOf(tab.wc.getURL())) : '';
+  const site = tab ? config.registrableDomain(config.hostOf(urlOf(tab))) : '';
   if (!site) return showNotice(t('mobile.noSite'), 'help');
   setMobileSite(site, !tab.mobile);
 }
 
 function openKeychainAdd() {
   const tab = activeTab();
-  const site = tab ? config.registrableDomain(config.hostOf(tab.wc.getURL())) : '';
+  const site = tab ? config.registrableDomain(config.hostOf(urlOf(tab))) : '';
   openPanel('kcadd', 480, { site });
 }
 
@@ -648,7 +650,7 @@ async function importFromBrowser(browser) {
   if (importing) return;
   importing = true;
   const tab = activeTab();
-  const url = tab ? tab.wc.getURL() : '';
+  const url = tab ? urlOf(tab) : '';
   const siteDomain = /^https?:/i.test(url) ? config.registrableDomain(config.hostOf(url)) : '';
   let res;
   try {
@@ -961,7 +963,7 @@ const routes = {
   'POST /tabs/close': (b) => { const ok = !!tabById(b.id); closeTab(b.id); return { ok }; },
   'POST /mobile': async (b) => {
     const tab = tabById(b.id) || activeTab();
-    const site = b.site ? config.registrableDomain(String(b.site).replace(/^https?:\/\//, '').split('/')[0]) : tab ? config.registrableDomain(config.hostOf(tab.wc.getURL())) : '';
+    const site = b.site ? config.registrableDomain(String(b.site).replace(/^https?:\/\//, '').split('/')[0]) : tab ? config.registrableDomain(config.hostOf(urlOf(tab))) : '';
     if (!site) return { error: 'no_site' };
     await setMobileSite(site, !!b.enabled);
     return { site, enabled: !!b.enabled, mobileSites: config.get('mobileSites') };
@@ -969,7 +971,7 @@ const routes = {
   'GET /downloads': () => ({ dir: config.DOWNLOADS_DIR, downloads }),
   'GET /keychain/accounts': async (_b, q) => {
     const tab = tabById(q.id) || activeTab();
-    const site = tab ? config.registrableDomain(config.hostOf(tab.wc.getURL())) : '';
+    const site = tab ? config.registrableDomain(config.hostOf(urlOf(tab))) : '';
     return { site, accounts: [...new Set((await keychain.listAccounts(site)).map((a) => a.account))] };
   },
   'POST /keychain/fill': async (b) => {
