@@ -237,12 +237,23 @@ async function setFiles(page, target, files) {
   const s = await page.context().newCDPSession(page);
   try {
     const selector = `[data-wclaude-upload="${mark}"]`;
-    const { result } = await s.send('Runtime.evaluate', { expression: `document.querySelector('${selector}')` });
+    // Recherche à travers les shadow roots ouverts (composants web : Reddit, YouTube…), sans parcourir
+    // tout l'arbre DOM par le protocole, ce qui fige puis fait planter l'onglet sur une page lourde.
+    const deepQuery = `(() => {
+      const find = (root) => {
+        const hit = root.querySelector('${selector}');
+        if (hit) return hit;
+        for (const el of root.querySelectorAll('*')) if (el.shadowRoot) { const r = find(el.shadowRoot); if (r) return r; }
+        return null;
+      };
+      return find(document);
+    })()`;
+    const { result } = await s.send('Runtime.evaluate', { expression: deepQuery });
     if (result && result.objectId) {
       await s.send('DOM.setFileInputFiles', { files, objectId: result.objectId });
     } else {
-      // Element inside a frame: search the whole document tree.
-      await s.send('DOM.getDocument', { depth: -1, pierce: true });
+      // Élément dans un cadre : recherche dans l'arbre du document (cadres compris).
+      await s.send('DOM.getDocument', { depth: 0, pierce: true });
       const { searchId, resultCount } = await s.send('DOM.performSearch', { query: selector });
       if (!resultCount) throw new Error('The file input could not be reached.');
       const { nodeIds } = await s.send('DOM.getSearchResults', { searchId, fromIndex: 0, toIndex: 1 });

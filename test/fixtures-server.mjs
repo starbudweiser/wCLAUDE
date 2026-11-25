@@ -20,6 +20,28 @@ const routes = {
     <script>document.getElementById('hidden').onchange = (e) => {
       const f = [...e.target.files]; document.getElementById('out').textContent = 'Picked ' + f.map(x => x.name + ' ' + x.size).join(', ');
     };</script>`),
+  // Champ de fichier caché dans un composant web (shadow DOM), comme l'éditeur de Reddit, sur une page lourde.
+  '/shadow': () => page('Shadow upload', `
+    <h1>Shadow upload</h1>
+    <x-uploader></x-uploader>
+    <p id="out">No file</p>
+    <div id="bulk"></div>
+    <script>
+      document.getElementById('bulk').innerHTML = Array.from({ length: 20000 }, (_, i) => '<span>item ' + i + '</span>').join('');
+      customElements.define('x-uploader', class extends HTMLElement {
+        constructor() {
+          super();
+          const r = this.attachShadow({ mode: 'open' });
+          r.innerHTML = '<button id="pick">Add a video</button><input id="f" type="file" accept="video/mp4" style="display:none">';
+          r.getElementById('pick').onclick = () => r.getElementById('f').click();
+          r.getElementById('f').onchange = (e) => {
+            const f = [...e.target.files]; document.getElementById('out').textContent = 'Shadow got ' + f.map((x) => x.name + ' ' + x.size).join(', ');
+          };
+        }
+      });
+    </script>`),
+  // Champ de fichier dans un cadre (iframe).
+  '/framed': () => page('Framed upload', `<h1>Framed upload</h1><iframe src="/button" width="600" height="200"></iframe>`),
   '/drop': () => page('Drop zone', `
     <h1>Drop zone</h1>
     <div id="zone" style="width:300px;height:120px;border:2px dashed #888">Drop files here</div>

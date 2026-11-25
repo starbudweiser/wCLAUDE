@@ -55,6 +55,20 @@ await call('browser_upload_files', { tab: tabId, paths: [BIG], ref: refOf(snap, 
 const { out: picked } = await call('browser_page_text', { tab: tabId });
 check('file picker opened by a button got the file', picked.includes(`Picked ${path.basename(BIG)} ${size}`));
 
+// 2 bis. Champ caché dans un shadow DOM, sur une page lourde (cas de Reddit : blocage puis plantage de l'onglet)
+await call('browser_navigate', { tab: tabId, url: BASE + '/shadow' });
+({ out: snap } = await call('browser_snapshot', { tab: tabId }));
+const t0 = Date.now();
+await call('browser_upload_files', { tab: tabId, paths: [BIG], ref: refOf(snap, /Add a video/) });
+const { out: shadowed } = await call('browser_page_text', { tab: tabId });
+check(`file input inside a shadow root got the file in ${Date.now() - t0} ms`, shadowed.includes(`Shadow got ${path.basename(BIG)} ${size}`) && Date.now() - t0 < 30000);
+
+// 2 ter. Champ dans un cadre
+await call('browser_navigate', { tab: tabId, url: BASE + '/framed' });
+await call('browser_upload_files', { tab: tabId, paths: [BIG], selector: 'iframe >> nth=0 >> internal:control=enter-frame >> #hidden' });
+const framedOk = await call('browser_evaluate', { tab: tabId, script: "return document.querySelector('iframe').contentDocument.getElementById('hidden').files[0]?.size || 0" });
+check('file input inside a frame got the file', framedOk.out.includes(String(size)));
+
 // 3. Zone de dépôt
 await call('browser_navigate', { tab: tabId, url: BASE + '/drop' });
 ({ out: snap } = await call('browser_snapshot', { tab: tabId }));
