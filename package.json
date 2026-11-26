@@ -1,7 +1,7 @@
 {
   "name": "wclaude",
   "productName": "wCLAUDE",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "A browser any MCP-compatible AI agent can fully drive: tabs, uploads of any size, tidy downloads, per-site iPhone mode, Keychain sign-in.",
   "main": "app/main.js",
   "type": "commonjs",
