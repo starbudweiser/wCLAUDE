@@ -106,6 +106,7 @@ The server starts wCLAUDE in the background when needed (it never takes the focu
 | `browser_upload_files` | Upload local files of any size (file input, file picker button, or drop zone). |
 | `browser_wait_for` | Wait for a text to appear or disappear, an element, or a delay. |
 | `browser_downloads` | List downloads and wait for one to finish. |
+| `browser_download_with_mdown` | Download the page's video or audio with [mDOWN](https://github.com/starbudweiser/mDOWN), sending this browser's signed-in session so account-only videos work. The toolbar also has an **mDOWN** button for the active tab. |
 | `browser_mobile_mode` | Switch a site to its iPhone version, or back to desktop. |
 | `browser_keychain_fill` | Fill the page's sign-in form from the macOS Keychain, after the user's approval. |
 | `browser_evaluate` | Run JavaScript in the page. |
