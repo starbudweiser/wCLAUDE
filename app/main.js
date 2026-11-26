@@ -989,6 +989,8 @@ const routes = {
     if (b.url) { const r = await mdown.send({ url: b.url, mode: b.mode, quality: b.quality, ses: session.defaultSession, useSession: b.useSession !== false }); return r; }
     return sendToMdown(tab, { mode: b.mode, quality: b.quality, useSession: b.useSession !== false });
   },
+  // mDOWN demande les cookies d'un site (tests des plateformes avec compte) : seulement si l'utilisateur a relié wCLAUDE à mDOWN.
+  'GET /mdown/cookies': async (_b, q) => (config.get('mdownLink') === true && /^https?:/i.test(q.url || '') ? { ok: true, cookies: await mdown.cookiesFor(q.url, session.defaultSession) } : { ok: false, error: 'disabled' }),
   'GET /mdown/job': (_b, q) => (config.get('mdownLink') === true ? mdown.status(q.id) : { ok: false, error: 'disabled' }),
   'GET /downloads': () => ({ dir: config.DOWNLOADS_DIR, downloads }),
   'GET /keychain/accounts': async (_b, q) => {

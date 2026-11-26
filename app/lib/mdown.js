@@ -58,6 +58,13 @@ function netscape(cookies, host, baseDomain) {
   return lines.join('\n') + '\n';
 }
 
+/** Cookies du site de cette adresse au format Netscape (chaîne vide s'il n'y en a pas). */
+async function cookiesFor(url, ses) {
+  const host = new URL(url).hostname.toLowerCase();
+  const text = netscape(await ses.cookies.get({}), host, host.split('.').slice(-2).join('.'));
+  return text.split('\n').length > 2 ? text : '';
+}
+
 /** Envoie une adresse à mDOWN. `ses` : session Electron dont on prend les cookies du site (omis : sans compte). */
 async function send({ url, mode = 'video', quality, format, ses, baseDomain, useSession = true }) {
   const req = { op: 'add', url, mode };
@@ -74,4 +81,4 @@ async function send({ url, mode = 'video', quality, format, ses, baseDomain, use
 
 const status = (id) => call({ op: 'status', id });
 
-module.exports = { send, status, call, netscape, isInstalled };
+module.exports = { send, status, call, netscape, isInstalled, cookiesFor };
