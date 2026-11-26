@@ -24,6 +24,10 @@ const NOISE = [
   /^(il y a|hace|fa|\d+\s*(s|sec|min|h|j|d|days?|hours?|minutes?|seconds?|jours?|heures?|giorni|ore|días|horas)\b.*\b(ago|fa)?)\b/i,
   /^\d+\s*(s|sec|min|mins|h|hrs?|d|days?|hours?|minutes?|jours?|heures?)\s*(ago)?$/i,
   /^(\d+(\.\d+)?[kKmM]?\s*)?(views?|vues|likes?|comments?|commentaires|visualizaciones|visualizzazioni|downloads?|téléchargements)$/i,
+  // compteur suivi d'un ou deux mots : « 6 507 625 membres », « 1.2k upvotes », « 85 872 members online »
+  /^[+\-]?\d[\d\s.,\u00a0\u202f]*[kKmM]?\s+\p{L}+(\s(online|en ligne|connectés|en línea|in linea|mensuels|monthly|mensuales|mensili))?$/iu,
+  // publicités
+  /^(sponsoris[ée]e?|sponsored|promoted|publicité|publicidad|pubblicità|annonce|advertisement|ad|promu)$/i,
 ];
 const isNoise = (line) => line.length < 3 || !/\p{L}/u.test(line) || NOISE.some((r) => r.test(line));
 

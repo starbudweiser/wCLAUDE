@@ -135,6 +135,8 @@ function readPage(url, selector) {
     const js = `(() => {
       const sel = ${JSON.stringify(selector || '')};
       const root = sel ? document.querySelector(sel) : document.body;
+      // page entière : publicités, menus, colonnes latérales et pied de page changent à chaque visite sans rien dire
+      if (!sel) for (const e of document.querySelectorAll('iframe, ins.adsbygoogle, [id^="google_ads"], [class*="advert"], [aria-label*="advert" i], [data-testid*="ad-" i], shreddit-ad-post, shreddit-comments-page-ad, [slot*="ad" i], aside, nav, footer, [role="complementary"], [role="navigation"], [role="contentinfo"]')) e.remove();
       const pw = [...document.querySelectorAll('input[type=password]')].some((e) => e.offsetParent !== null);
       return { title: document.title, text: root ? root.innerText : '', found: !!root, hasPassword: pw };
     })()`;

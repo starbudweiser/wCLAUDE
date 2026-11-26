@@ -95,6 +95,7 @@ test('veille : numéros de version', () => {
   assert.equal(core.highestVersion(' 6.9 '), '6.9');
   assert.equal(core.highestVersion('1.0.27'), '1.0.27');
   assert.deepEqual(core.addedLines('1.0.27', '1.0.28', { keepNoise: true }), ['1.0.28']);
+  assert.deepEqual(core.addedLines('', '6 507 625 membres\n85 872 members online\n176 k joueurs mensuels\n1.2k upvotes\nSponsorisé\nNouveau commentaire de Bob'), ['Nouveau commentaire de Bob']);
   assert.ok(core.versionGreater('v1.4.3', 'v1.4.2'));
   assert.ok(core.versionGreater('2.0', '2.0 rc1'));
   assert.ok(!core.versionGreater('2.0 beta 3', '2.0'));
