@@ -13,6 +13,7 @@ const youtube = require('./lib/youtube');
 const presence = require('./lib/presence');
 const autostart = require('./lib/autostart');
 const watch = require('./lib/watch');
+const mdown = require('./lib/mdown');
 const browserImport = require('./lib/browserimport');
 const pkg = require('../package.json');
 
@@ -800,6 +801,15 @@ ipcMain.on('watch:open', () => openWatch());
 ipcMain.on('tab:select', (_e, id) => selectTab(id));
 ipcMain.on('tab:close', (_e, id) => closeTab(id));
 ipcMain.on('mobile:toggle', () => toggleMobileForActive());
+async function sendToMdown(tab, { mode = 'video', quality, useSession = true } = {}) {
+  const url = tab ? urlOf(tab) : '';
+  if (!/^https?:/i.test(url || '')) { showNotice(t('mdown.noPage'), 'help'); return { error: 'no_page' }; }
+  const r = await mdown.send({ url, mode, quality, ses: session.defaultSession, baseDomain: config.registrableDomain(config.hostOf(url)), useSession });
+  if (r.ok) showNotice(t('mdown.sent'), 'help');
+  else showNotice(t(r.error === 'not_installed' ? 'mdown.missing' : 'mdown.off'), 'help');
+  return r;
+}
+ipcMain.on('mdown:send', () => { const tab = activeTab(); if (tab) sendToMdown(tab); });
 ipcMain.on('keychain:fill', () => { const tab = activeTab(); if (tab) keychainFill(tab, null, { fromUser: true }); });
 ipcMain.on('downloads:menu', () => downloadsMenu());
 ipcMain.on('downloads:open', () => openDownloadsFolder());
@@ -968,6 +978,12 @@ const routes = {
     await setMobileSite(site, !!b.enabled);
     return { site, enabled: !!b.enabled, mobileSites: config.get('mobileSites') };
   },
+  'POST /mdown/send': async (b) => {
+    const tab = tabById(b.id) || activeTab();
+    if (b.url) { const r = await mdown.send({ url: b.url, mode: b.mode, quality: b.quality, ses: session.defaultSession, useSession: b.useSession !== false }); return r; }
+    return sendToMdown(tab, { mode: b.mode, quality: b.quality, useSession: b.useSession !== false });
+  },
+  'GET /mdown/job': (_b, q) => mdown.status(q.id),
   'GET /downloads': () => ({ dir: config.DOWNLOADS_DIR, downloads }),
   'GET /keychain/accounts': async (_b, q) => {
     const tab = tabById(q.id) || activeTab();

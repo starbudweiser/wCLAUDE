@@ -290,5 +290,11 @@
   "import.error.nokey": "The {browser} key was not found in the Keychain. Open {browser} once, then try again.",
   "import.error.read": "Could not read the {browser} cookies.",
   "import.error.perm": "macOS blocks reading {browser} data. Turn on wCLAUDE in System Settings → Privacy & Security → Full Disk Access, then quit and relaunch wCLAUDE.",
-  "import.openSettings": "Open Settings"
+  "import.openSettings": "Open Settings",
+  "mdown.button": "mDOWN",
+  "mdown.tooltip": "Download this page's video or audio with mDOWN",
+  "mdown.sent": "Sent to mDOWN (with this site's session).",
+  "mdown.noPage": "Open a web page to download it with mDOWN.",
+  "mdown.off": "mDOWN isn't responding. Start the app.",
+  "mdown.missing": "mDOWN is not installed."
 }

@@ -290,5 +290,11 @@
   "import.error.nokey": "Clé de {browser} introuvable dans le Trousseau. Ouvrez {browser} une fois, puis recommencez.",
   "import.error.read": "Impossible de lire les cookies de {browser}.",
   "import.error.perm": "macOS bloque la lecture des données de {browser}. Active wCLAUDE dans Réglages Système → Confidentialité et sécurité → Accès complet au disque, puis quitte et relance wCLAUDE.",
-  "import.openSettings": "Ouvrir les Réglages"
+  "import.openSettings": "Ouvrir les Réglages",
+  "mdown.button": "mDOWN",
+  "mdown.tooltip": "Télécharger la vidéo ou le son de cette page avec mDOWN",
+  "mdown.sent": "Envoyé à mDOWN (avec la session de ce site).",
+  "mdown.noPage": "Ouvrez une page web pour la télécharger avec mDOWN.",
+  "mdown.off": "mDOWN ne répond pas. Lancez l'appli.",
+  "mdown.missing": "mDOWN n'est pas installée."
 }

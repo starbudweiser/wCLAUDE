@@ -290,5 +290,11 @@
   "import.error.nokey": "Chiave di {browser} non trovata nel Portachiavi. Apri {browser} una volta, poi riprova.",
   "import.error.read": "Impossibile leggere i cookie di {browser}.",
   "import.error.perm": "macOS blocca la lettura dei dati di {browser}. Attiva wCLAUDE in Impostazioni di Sistema → Privacy e sicurezza → Accesso completo al disco, poi chiudi e riapri wCLAUDE.",
-  "import.openSettings": "Apri Impostazioni"
+  "import.openSettings": "Apri Impostazioni",
+  "mdown.button": "mDOWN",
+  "mdown.tooltip": "Scarica il video o l'audio di questa pagina con mDOWN",
+  "mdown.sent": "Inviato a mDOWN (con la sessione di questo sito).",
+  "mdown.noPage": "Apri una pagina web per scaricarla con mDOWN.",
+  "mdown.off": "mDOWN non risponde. Avvia l'app.",
+  "mdown.missing": "mDOWN non è installata."
 }

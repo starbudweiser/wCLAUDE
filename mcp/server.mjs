@@ -619,6 +619,33 @@ tool('browser_downloads', 'List downloads (saved in wCLAUDE\'s downloads folder)
   return `Downloads folder: ${data.dir}\n${lines.join('\n') || 'No downloads yet.'}`;
 }, { readOnlyHint: true });
 
+tool('browser_download_with_mdown', 'Download the video or audio of a page with mDOWN (the user\'s media downloader, self-updating yt-dlp engine) using THIS browser\'s signed-in session, so pages that need an account work. Defaults to the active tab. Waits for the end and returns the saved file path. Needs the mDOWN app installed (it is started in the background if needed). The destination is the folder the user set in mDOWN.', {
+  tab: tabArg,
+  url: z.string().optional().describe('Page address to download (default: the address of the tab).'),
+  mode: z.enum(['video', 'audio']).default('video'),
+  quality: z.enum(['best', '2160', '1440', '1080', '720', '480']).default('best').describe('Maximum video height.'),
+  use_session: z.boolean().default(true).describe('Send this site\'s cookies to mDOWN (needed for account-only videos).'),
+  wait_seconds: z.number().min(0).max(3600).default(900).describe('Wait this long for the download to finish (0 = return at once with the job id).'),
+}, async ({ tab, url, mode, quality, use_session, wait_seconds }) => {
+  const { tab: t } = await resolve(tab, 'mdown');
+  await activity('mdown');
+  const r = await api('POST', '/mdown/send', { id: t.id, url, mode, quality: quality === 'best' ? undefined : quality, useSession: use_session });
+  if (!r.ok) throw new Error(r.error === 'not_installed' ? 'mDOWN is not installed.' : r.error === 'no_page' ? 'Open a web page in the tab first.' : (r.message || r.error || 'mDOWN did not accept the download.'));
+  const id = r.job.id;
+  if (wait_seconds === 0) return JSON.stringify(r.job, null, 2);
+  const end = Date.now() + wait_seconds * 1000;
+  let job = r.job;
+  while (Date.now() < end) {
+    await sleep(1500);
+    const s = await api('GET', `/mdown/job?id=${encodeURIComponent(id)}`);
+    if (!s.job) throw new Error('The download disappeared from mDOWN (cancelled?).');
+    job = s.job;
+    if (job.state === 'done') return `Downloaded: ${job.file}\n${job.title || ''} (${job.platform || ''})`;
+    if (job.state === 'paused' || (job.state === 'failed' && job.final)) throw new Error(`mDOWN: ${job.state}${job.error ? ' - ' + job.error : ''}`);
+  }
+  return `Still downloading in mDOWN (${Math.round((job.progress || 0) * 100)} %). Job id: ${id}`;
+});
+
 tool('browser_mobile_mode', 'Switch a site to its iPhone version (iPhone user agent, screen size and touch) or back to desktop. The choice is remembered for the site.', {
   enabled: z.boolean(),
   site: z.string().optional().describe('Domain, e.g. instagram.com (default: the site of the tab).'),

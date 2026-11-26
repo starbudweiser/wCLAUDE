@@ -290,5 +290,11 @@
   "import.error.nokey": "No se encontró la clave de {browser} en el Llavero. Abra {browser} una vez y vuelva a intentarlo.",
   "import.error.read": "No se pudieron leer las cookies de {browser}.",
   "import.error.perm": "macOS bloquea la lectura de los datos de {browser}. Active wCLAUDE en Ajustes del Sistema → Privacidad y seguridad → Acceso total al disco, y reinicie wCLAUDE.",
-  "import.openSettings": "Abrir Ajustes"
+  "import.openSettings": "Abrir Ajustes",
+  "mdown.button": "mDOWN",
+  "mdown.tooltip": "Descargar el vídeo o audio de esta página con mDOWN",
+  "mdown.sent": "Enviado a mDOWN (con la sesión de este sitio).",
+  "mdown.noPage": "Abra una página web para descargarla con mDOWN.",
+  "mdown.off": "mDOWN no responde. Abra la app.",
+  "mdown.missing": "mDOWN no está instalada."
 }
