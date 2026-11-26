@@ -121,6 +121,7 @@ function pushState() {
       },
       agent: { label: agent.label, name: agent.name || t('agent.generic'), at: agent.at, tabId: agent.tabId },
       notice,
+      mdownLink: config.get('mdownLink') === true,
       watch: { unread: watch.unreadCount() },
       handoff: handoff && handoff.status === 'waiting' ? { id: handoff.id, reason: handoff.reason, kind: handoff.kind, agent: handoff.agent || t('agent.generic') } : null,
     });
@@ -802,6 +803,7 @@ ipcMain.on('tab:select', (_e, id) => selectTab(id));
 ipcMain.on('tab:close', (_e, id) => closeTab(id));
 ipcMain.on('mobile:toggle', () => toggleMobileForActive());
 async function sendToMdown(tab, { mode = 'video', quality, useSession = true } = {}) {
+  if (config.get('mdownLink') !== true) { showNotice(t('mdown.disabled'), 'help'); return { ok: false, error: 'disabled' }; }
   const url = tab ? urlOf(tab) : '';
   if (!/^https?:/i.test(url || '')) { showNotice(t('mdown.noPage'), 'help'); return { error: 'no_page' }; }
   const r = await mdown.send({ url, mode, quality, ses: session.defaultSession, baseDomain: config.registrableDomain(config.hostOf(url)), useSession });
@@ -857,7 +859,9 @@ ipcMain.handle('about:info', () => {
   } catch { /* lancement depuis les sources */ }
   return { version: app.getVersion(), build: build || 'dev' };
 });
-ipcMain.handle('settings:get', () => ({
+ipcMain.handle('settings:get', async () => ({
+  mdownLink: config.get('mdownLink') === true,
+  mdownInstalled: await mdown.isInstalled(),
   mobileSites: config.get('mobileSites'),
   autoInstall: !!config.get('autoInstall'),
   agentControl: config.get('agentControl') !== false,
@@ -873,7 +877,8 @@ ipcMain.handle('settings:get', () => ({
   watchFile: watch.FILE,
 }));
 ipcMain.handle('settings:set', (_e, { key, value }) => {
-  if (['autoInstall', 'agentControl', 'watchNotify'].includes(key)) config.set(key, !!value);
+  if (['autoInstall', 'agentControl', 'watchNotify', 'mdownLink'].includes(key)) config.set(key, !!value);
+  if (key === 'mdownLink') pushState();
   if (key === 'iconMode' && presence.MODES.includes(value)) config.set('iconMode', presence.apply(value));
   if (key === 'autoStart' && app.isPackaged) return autostart.setEnabled(process.execPath, !!value);
   return true;
@@ -980,10 +985,11 @@ const routes = {
   },
   'POST /mdown/send': async (b) => {
     const tab = tabById(b.id) || activeTab();
+    if (config.get('mdownLink') !== true) return { ok: false, error: 'disabled' };
     if (b.url) { const r = await mdown.send({ url: b.url, mode: b.mode, quality: b.quality, ses: session.defaultSession, useSession: b.useSession !== false }); return r; }
     return sendToMdown(tab, { mode: b.mode, quality: b.quality, useSession: b.useSession !== false });
   },
-  'GET /mdown/job': (_b, q) => mdown.status(q.id),
+  'GET /mdown/job': (_b, q) => (config.get('mdownLink') === true ? mdown.status(q.id) : { ok: false, error: 'disabled' }),
   'GET /downloads': () => ({ dir: config.DOWNLOADS_DIR, downloads }),
   'GET /keychain/accounts': async (_b, q) => {
     const tab = tabById(q.id) || activeTab();

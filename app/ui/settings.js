@@ -16,6 +16,9 @@ $('watchHint').textContent = t('settings.watchHint');
 $('watchNotify').querySelector('.sc-option__label').textContent = t('settings.watchNotify');
 $('watchOpen').innerHTML = `${icon('eye')}<span>${esc(t('settings.watchOpen'))}</span>`;
 $('watchOpen').onclick = () => invoke('settings:openWatch');
+$('mdTitle').textContent = t('settings.mdown');
+$('mdHint').textContent = t('settings.mdownHint');
+$('mdLink').querySelector('.sc-option__label').textContent = t('settings.mdownLink');
 $('mobileTitle').textContent = t('settings.mobile');
 $('mobileHint').textContent = t('settings.mobileHint');
 $('dlTitle').textContent = t('settings.downloads');
@@ -73,6 +76,8 @@ async function load() {
   $('autoStart').classList.toggle('is-disabled', !s.autoStartAvailable);
   $('autoStart').setAttribute('aria-disabled', String(!s.autoStartAvailable));
   $('autoStartHint').textContent = t(s.autoStartAvailable ? 'settings.autoStartHint' : 'settings.autoStartDev');
+  checkbox($('mdLink'), s.mdownLink, (v) => invoke('settings:set', { key: 'mdownLink', value: v }));
+  $('mdState').textContent = t(s.mdownInstalled ? 'settings.mdownFound' : 'settings.mdownMissing');
   checkbox($('watchNotify'), s.watchNotify, (v) => invoke('settings:set', { key: 'watchNotify', value: v }));
   $('watchFile').textContent = s.watchFile;
   checkbox($('updAuto'), s.autoInstall, (v) => invoke('settings:set', { key: 'autoInstall', value: v }));

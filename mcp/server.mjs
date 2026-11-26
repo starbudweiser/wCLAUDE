@@ -630,7 +630,7 @@ tool('browser_download_with_mdown', 'Download the video or audio of a page with 
   const { tab: t } = await resolve(tab, 'mdown');
   await activity('mdown');
   const r = await api('POST', '/mdown/send', { id: t.id, url, mode, quality: quality === 'best' ? undefined : quality, useSession: use_session });
-  if (!r.ok) throw new Error(r.error === 'not_installed' ? 'mDOWN is not installed.' : r.error === 'no_page' ? 'Open a web page in the tab first.' : (r.message || r.error || 'mDOWN did not accept the download.'));
+  if (!r.ok) throw new Error(r.error === 'disabled' ? 'The mDOWN link is turned off. The user can turn it on in wCLAUDE > Settings > Link with mDOWN.' : r.error === 'not_installed' ? 'mDOWN is not installed.' : r.error === 'no_page' ? 'Open a web page in the tab first.' : (r.message || r.error || 'mDOWN did not accept the download.'));
   const id = r.job.id;
   if (wait_seconds === 0) return JSON.stringify(r.job, null, 2);
   const end = Date.now() + wait_seconds * 1000;

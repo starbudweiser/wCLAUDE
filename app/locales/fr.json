@@ -296,5 +296,11 @@
   "mdown.sent": "Envoyé à mDOWN (avec la session de ce site).",
   "mdown.noPage": "Ouvrez une page web pour la télécharger avec mDOWN.",
   "mdown.off": "mDOWN ne répond pas. Lancez l'appli.",
-  "mdown.missing": "mDOWN n'est pas installée."
+  "mdown.missing": "mDOWN n'est pas installée.",
+  "settings.mdown": "Lien avec mDOWN",
+  "settings.mdownHint": "mDOWN est un téléchargeur de vidéos et de sons du DESKTOP MAC TOOLKIT. Une fois relié, wCLAUDE a un bouton « mDOWN » et les agents un outil pour télécharger la page ouverte, avec la session du site.",
+  "settings.mdownLink": "Relier wCLAUDE à mDOWN",
+  "settings.mdownFound": "mDOWN est installée sur ce Mac.",
+  "settings.mdownMissing": "mDOWN n'est pas installée : github.com/starbudweiser/mDOWN",
+  "mdown.disabled": "Le lien avec mDOWN est désactivé : activez-le dans les réglages de wCLAUDE."
 }

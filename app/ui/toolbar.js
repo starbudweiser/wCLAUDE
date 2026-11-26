@@ -125,6 +125,7 @@ function renderAgent() {
 }
 
 function render() {
+  $('mdown').hidden = !state.mdownLink;      // bouton visible seulement si l'utilisateur a relié wCLAUDE à mDOWN
   if (!state) return;
   const tab = active();
   renderTabs();

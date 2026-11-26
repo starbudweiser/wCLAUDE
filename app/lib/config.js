@@ -20,6 +20,7 @@ const DEFAULTS = {
   windowSize: null,
   iconMode: 'menubar', // dock | menubar | both
   watchNotify: true,
+  mdownLink: false, // lien optionnel avec mDOWN (téléchargeur de médias), activé par l'utilisateur
 };
 
 let cache = null;

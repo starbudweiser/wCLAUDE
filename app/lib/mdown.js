@@ -4,11 +4,20 @@ const net = require('net');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 
 const SUPPORT = path.join(os.homedir(), 'Library', 'Application Support', process.env.WCLAUDE_MDOWN_DEV ? 'mDOWN Dev' : 'mDOWN');
 const SOCKET = path.join(SUPPORT, 'mdown.sock');
-const APP = path.join(os.homedir(), 'Applications', 'Applications Personnelles', 'mDOWN.app');
+const BUNDLE_ID = 'fr.stephan.mdown';
+const CANDIDATES = ['/Applications/mDOWN.app', path.join(os.homedir(), 'Applications', 'mDOWN.app'), path.join(os.homedir(), 'Applications', 'Applications Personnelles', 'mDOWN.app')];
+
+/** mDOWN est-elle installée ? Dossiers usuels, puis Spotlight (n'importe quel dossier ou disque). */
+async function isInstalled() {
+  if (CANDIDATES.some((p) => fs.existsSync(p))) return true;
+  return new Promise((resolve) => {
+    execFile('/usr/bin/mdfind', [`kMDItemCFBundleIdentifier == '${BUNDLE_ID}'`], { timeout: 5000 }, (err, out) => resolve(!err && out.trim().length > 0));
+  });
+}
 
 function once(req, timeoutMs = 20000) {
   return new Promise((resolve) => {
@@ -29,8 +38,8 @@ async function call(req) {
     const r = await once(req);
     if (r) return r;
     if (i === 0) {
-      if (!fs.existsSync(APP)) return { ok: false, error: 'not_installed' };
-      spawn('/usr/bin/open', ['-g', '-a', APP, '--args', '--background'], { stdio: 'ignore', detached: true }).unref();
+      if (!(await isInstalled())) return { ok: false, error: 'not_installed' };
+      spawn('/usr/bin/open', ['-g', '-b', BUNDLE_ID, '--args', '--background'], { stdio: 'ignore', detached: true }).unref();     // sans prendre le focus
     }
     await new Promise((r2) => setTimeout(r2, 500));
   }
@@ -65,4 +74,4 @@ async function send({ url, mode = 'video', quality, format, ses, baseDomain, use
 
 const status = (id) => call({ op: 'status', id });
 
-module.exports = { send, status, call, netscape };
+module.exports = { send, status, call, netscape, isInstalled };

@@ -296,5 +296,11 @@
   "mdown.sent": "Sent to mDOWN (with this site's session).",
   "mdown.noPage": "Open a web page to download it with mDOWN.",
   "mdown.off": "mDOWN isn't responding. Start the app.",
-  "mdown.missing": "mDOWN is not installed."
+  "mdown.missing": "mDOWN is not installed.",
+  "settings.mdown": "Link with mDOWN",
+  "settings.mdownHint": "mDOWN is a video and audio downloader from the DESKTOP MAC TOOLKIT. Once linked, wCLAUDE gets an \"mDOWN\" button and agents get a tool to download the open page with the site's session.",
+  "settings.mdownLink": "Link wCLAUDE to mDOWN",
+  "settings.mdownFound": "mDOWN is installed on this Mac.",
+  "settings.mdownMissing": "mDOWN is not installed: github.com/starbudweiser/mDOWN",
+  "mdown.disabled": "The mDOWN link is turned off: turn it on in wCLAUDE settings."
 }
